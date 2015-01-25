@@ -2,7 +2,7 @@ MVM
 =================
 My first little Virtual Machine written in C++ (or in Java if it fails).
 
-It's a vm for a strong dynamic typed language. But actually its just an interpreter for a really trimmed down language. This type of interpreter is sometimes called VM.
+It's a vm for a dynamic typed language. But actually its just an interpreter for a really trimmed down language. This type of interpreter is sometimes called VM.
 
 Goal
 -----------------
@@ -42,22 +42,26 @@ Function statements
 - call func_name N
   - Call a function with N values from the stack
   - the function creates a new scope, stores the current stack index
-  - call be reference
+  - call by value
+  - N >= number of arguments defined in function declaration
+- call_var_args func_name
+  - like above, but first pops the number of arguments from the stack
 - push_val value
   Pushs a literal value on the stack
 - push_var variable_name
   Pushs the content of the variable on the stack
 - set var_name
   Set a variable to the top most item on the stack (pops it)
+- dup
+  Duplicates the top element of the stack
 
 Control statement
-- while var_name
-  excetutes the following block while the variable isn't `false` or `null` 
+- while
+  - pops a value and if this values is equivalent to true, it executes the following code block
+  - after executing the block, the while statement is executed again
 - if
   - followed by a code block
   - pops a value from the stack and executes the block if it isn't `false` or `null`
-- ife
-  has also an else block
 - else
   begins an else block
 - end
@@ -172,11 +176,34 @@ Ideas that need some thought
     - con: Function.call() gets more complicated, see problems below
     - solution: just capture the whole scope
   - to call a function, just push N arguments and then itself on the stack and call `call N`
-- Add prototype inheritance to map type
+- Add prototype inheritance to map type (to be implemented later)
   - each map has a property `__proto__` that can reference another map
+  - … and a property `__name__` to indicate the group of objects (aka class) it belongs to
   - if map `A` has the prototype map `B` then values are also searched in `B` when `A` doesn't contain the requested
+  - needs clone function that creates a new map with reference to all values of another map
   - pro: inheritance almost for free, only small code changes in the map code
   - con: usefulness?
+Usefulness approved (12.01) for the above two
+
+- Make every type a subclass of Map (to be implemented later)
+  - pro: would allow some sort of object orientation without much work
+  - con: –
+- Add some sort of exception
+  - catch syntax
+  ```
+      try
+        [block of code]
+      catch
+        [block of code, exception object is stored in variable __ex]
+      end
+  ```
+  - throw syntax: just a `throw` statement that pops a value from the stack
+    - actually places this value in the exception object as the `data` property
+  - pro: improves usefulness of language dramatically
+  - con: complex
+  - Solution: Use exception mechanism of C++
+
+No more features, as it contains enough features (when implementing the weird ideas) to be a VM for languages like JavaScript …
 
 Some Problems
 --------------------
@@ -206,4 +233,26 @@ Possible solutions:
       - if the ref count of a non stack scope gets to be zero, the scope is finally deleted
       - scope with a zero ref count are deleted when removed from the stack
       - it's some sort of reference counting GC for scopes
-      - goos solution?
+      - good solution?
+Should the root scope behave like a function root scope?
+- Yes. Use subclass RootScope of Scope, which is an parent for MainScope and FunctionScope.
+- Delete the ScopeStack, double link the scopes instead and use a ScopeHeap for GC
+
+TODO
+---------------------
+- Rewrite it to include thr weird ideas
+  - con: complex
+  - pro: improves usefulness of language dramatically
+- Write some example code
+- Don't implement prototype stuff
+- Implement `class` statement that does nothing
+```
+	class
+	[CODE]
+	end
+```
+
+
+Weird ideas (when the above is implemented)
+--------------------
+- Implement multi threading via workers (see JavaScript)
