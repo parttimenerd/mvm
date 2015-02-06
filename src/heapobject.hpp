@@ -1,5 +1,4 @@
-#ifndef HEAP_OBJECT
-#define HEAP_OBJECT
+#pragma once
 
 #include <sstream>
 #include <iostream>
@@ -17,7 +16,7 @@ enum class Type : id_type {
 	BOOLEAN,
 	MAP,
 	ARRAY,
-	SSCOPE //SCOPE doesn't work, is probably predefinded somewhere
+	SCOPE //SCOPE doesn't work, is probably predefinded somewhere
 };
 
 /**
@@ -160,5 +159,3 @@ struct CodeFunction : Function {
 	std::vector<Line> lines;
 
 };
-
-#endif

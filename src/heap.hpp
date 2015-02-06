@@ -1,5 +1,4 @@
-#ifndef HEAP
-#define HEAP
+#pragma once
 
 #include <string>
 #include <unordered_map>
@@ -29,5 +28,3 @@ struct Heap {
 
 	~Heap();
 };
-
-#endif

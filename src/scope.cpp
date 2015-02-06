@@ -1,11 +1,11 @@
 #include "scope.hpp"
 #include "heap.hpp"
 
-/*Scope::Scope(Heap *heap) : HeapObject(Type::SSCOPE, heap) {
+/*Scope::Scope(Heap *heap) : HeapObject(Type::SCOPE, heap) {
     isRoot = true;
 }*/
 
-Scope::Scope(Heap *heap, Scope *scope) : HeapObject(Type::SSCOPE, heap) {
+Scope::Scope(Heap *heap, Scope *scope) : HeapObject(Type::SCOPE, heap) {
     parent = scope;
     if (scope == 0){
         isRoot = true;

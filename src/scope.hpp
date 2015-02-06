@@ -1,5 +1,4 @@
-#ifndef SCOPE
-#define SCOPE
+#pragma once
 
 #include <map>
 
@@ -36,5 +35,3 @@ struct Scope : HeapObject {
 
     std::string str_large();
 };
-
-#endif
