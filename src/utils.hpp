@@ -1,5 +1,4 @@
-#ifndef UTILS
-#define UTILS
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -10,5 +9,3 @@
 typedef uint64_t id_type;
 /** Type of the value of an Int object */
 typedef int64_t int_type;
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef ENV
-#define ENV
+#pragma once
 
 #include "heap.hpp"
 #include "stack.hpp"
@@ -16,5 +15,3 @@ struct Env {
 
   ~Env();
 };
-
-#endif
