@@ -48,6 +48,14 @@ endif()
 ## Generate executables in ./src
 file(GLOB sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
 
+file(GLOB implementation_headers "src/*.hpp")
+
+add_library(mvm
+	${implementation_headers}
+)
+
+target_link_libraries(mvm)
+
 foreach(path IN LISTS sources)
 
   get_filename_component(target ${path} NAME_WE)

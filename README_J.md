@@ -1,10 +1,8 @@
-Important note: This README is only a rough draft and is only conceptually what I'm going to implement.
-
 MVM
 =================
-My first little Virtual Machine written in C++ (or in Java if it fails).
+My first little Virtual Machine written in Java.
 
-It's a vm for a dynamic typed language. But actually its just an interpreter for a really trimmed down language. This type of interpreter is sometimes called VM.
+It`s a vm for a dynamic typed language. But actually its just an interpreter for a really trimmed down language. This type of interpreter is sometimes called VM.
 
 Goal
 -----------------
@@ -13,7 +11,6 @@ The long term goal is to develop a language that compiles to MVM-Code, that is u
 
 Implementation notes
 ----------------
-- C++11 with extensive use of the STL
 - no additional libraries
 - simplicity over performance
   - extensive usage of the algorithm header of the STL
@@ -81,24 +78,7 @@ More shouldn't be neccessary to build a VM for a simple (to be designed) imperat
 
 Garbage collection
 ------------------------
-The VM uses a simple reference counting garbage collection.
-All values are located on the heap (modelled by a collection class). When a value is pushed initially on the stack, it's ref count is 1.
-
-The ref count is decreased when
-- the value is popped from the stack
-- a variable that has this value
-  - is removed because it's scope is dropped
-  - is assigned a new value
-- the value is removed from / overwritten in a collection
-
-The ref count is increased
-- the value is assigned to a (new) variable
-  - adding this to a function call frame implies this
-- the value is pushed on the stack
-- the value is added to a collection
-
-A value is removed from the heap (and cleaned up) if its ref count is zero. This is checked each time the ref count is decreased.
-Collections: Just the collection itself is removed, not its elements. Their ref counts are decreased.
+Garbage collection is done by the JVM.
 
 Architecture
 ------------------------

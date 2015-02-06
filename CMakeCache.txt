@@ -173,6 +173,9 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 //Value Computed by CMake
 mvm_BINARY_DIR:STATIC=/home/parttimenerd/Code/lang/vm
 
+//Dependencies for target
+mvm_LIB_DEPENDS:STATIC=
+
 //Value Computed by CMake
 mvm_SOURCE_DIR:STATIC=/home/parttimenerd/Code/lang/vm
 

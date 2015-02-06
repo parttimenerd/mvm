@@ -1,16 +1,14 @@
 #ifndef UTILS
 #define UTILS
 
-#include <map>
-#include <vector>
-#include <string>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
-/** print num white spaces on the stream */
-void print_ws(std::ostream& os, int num){
-	for (int i = 0; i < num; i++){
-		os.put(' ');
-	}
-}
+/** Type of a normal id in the following */
+typedef uint64_t id_type;
+/** Type of the value of an Int object */
+typedef int64_t int_type;
 
 #endif
