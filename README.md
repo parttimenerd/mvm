@@ -1,6 +1,6 @@
 Important note: This README is only a rough draft and is only conceptually what I'm going to implement.
 
-How to build: run `make release` or run `./run.sh`
+How to build it: run `make release` or run `./run.sh` or (maybe the best way) use cmake.
 
 MVM
 =================

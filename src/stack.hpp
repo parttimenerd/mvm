@@ -1,5 +1,4 @@
-#ifndef STACK
-#define STACK
+#pragma once
 
 #include "utils.hpp"
 
@@ -57,5 +56,3 @@ struct Stack {
 
     std::string str();
 };
-
-#endif
