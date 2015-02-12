@@ -1,5 +1,6 @@
 #! /bin/sh
 
-make release
+cmake .
+make
 chmod +x mvm
 ./mvm
