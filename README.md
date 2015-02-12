@@ -1,5 +1,7 @@
 Important note: This README is only a rough draft and is only conceptually what I'm going to implement.
 
+How to build: run `make release` or run `./run.sh`
+
 MVM
 =================
 My first little Virtual Machine written in C++ (or in Java if it fails).

@@ -1,4 +1,4 @@
-CPP := clang 
+CPP := clang++ 
 DEBUGFLAGS := -ggdb -O1
 RELEASEFLAGS := -O3
 PROFILEFLAGS := -pg -ggdb -O3
