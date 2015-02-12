@@ -39,7 +39,11 @@ SET(CMAKE_MAKEFILE_PRODUCTS
 
 # Dependency information for all targets:
 SET(CMAKE_DEPEND_INFO_FILES
+  "CMakeFiles/env.dir/DependInfo.cmake"
+  "CMakeFiles/function.dir/DependInfo.cmake"
   "CMakeFiles/heap.dir/DependInfo.cmake"
   "CMakeFiles/main.dir/DependInfo.cmake"
   "CMakeFiles/mvm.dir/DependInfo.cmake"
+  "CMakeFiles/scope.dir/DependInfo.cmake"
+  "CMakeFiles/stack.dir/DependInfo.cmake"
   )

@@ -1,7 +1,5 @@
-#ifndef SCOPE
-#define SCOPE
-
-#include <map>
+#ifndef SCOPE_HPP
+#define SCOPE_HPP
 
 #include "utils.hpp"
 #include "heapobject.hpp"
@@ -25,6 +23,8 @@ struct Scope : HeapObject {
     }
 
     void set(std::string varname, HeapObject* obj, bool reference = true);
+
+    void setHere(std::string varname, HeapObject* obj, bool reference = false);
 
     HeapObject* get(std::string varname, bool returnNothing = true);
 

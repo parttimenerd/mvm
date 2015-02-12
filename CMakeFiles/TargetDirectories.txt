@@ -1,3 +1,7 @@
+/home/parttimenerd/Code/lang/vm/CMakeFiles/env.dir
+/home/parttimenerd/Code/lang/vm/CMakeFiles/function.dir
 /home/parttimenerd/Code/lang/vm/CMakeFiles/heap.dir
 /home/parttimenerd/Code/lang/vm/CMakeFiles/main.dir
 /home/parttimenerd/Code/lang/vm/CMakeFiles/mvm.dir
+/home/parttimenerd/Code/lang/vm/CMakeFiles/scope.dir
+/home/parttimenerd/Code/lang/vm/CMakeFiles/stack.dir

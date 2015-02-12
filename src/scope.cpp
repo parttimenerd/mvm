@@ -1,11 +1,14 @@
+#include "utils.hpp"
+
 #include "scope.hpp"
 #include "heap.hpp"
+#include "heapobjects.hpp"
 
 /*Scope::Scope(Heap *heap) : HeapObject(Type::SSCOPE, heap) {
     isRoot = true;
 }*/
 
-Scope::Scope(Heap *heap, Scope *scope) : HeapObject(Type::SSCOPE, heap) {
+Scope::Scope(Heap *heap, Scope *scope) : HeapObject(Type::SCOPE, heap) {
     parent = scope;
     if (scope == 0){
         isRoot = true;
@@ -28,6 +31,24 @@ void Scope::set(std::string varname, HeapObject* obj, bool reference){
         variables[varname] = obj;
     }
     if (!hasWhole){
+        variables[varname] = obj;
+        if (reference){
+            obj->reference();
+        }
+    }
+}
+
+void Scope::setHere(std::string varname, HeapObject* obj, bool reference){
+    bool hasSelf = variables.find(varname) != variables.end();
+    if (hasSelf){
+        if (obj != variables[varname]){
+            variables[varname]->dereference();
+            if (reference){
+                obj->reference();
+            }
+        }
+        variables[varname] = obj;
+    } else {
         variables[varname] = obj;
         if (reference){
             obj->reference();

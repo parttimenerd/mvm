@@ -1,10 +1,7 @@
 #ifndef STACK
 #define STACK
 
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
+#include "utils.hpp"
 
 struct HeapObject;
 
@@ -38,6 +35,11 @@ struct Stack {
             frameStack.pop_back();
         }
         cleanToSize(newSize, dereference);
+    }
+
+    void popFrameAndAddReturn(HeapObject *returnVal, bool dereference = false, bool reference = true){
+        popFrame(dereference);
+        push(returnVal, reference);
     }
 
     bool hasStackFrames(){

@@ -6,18 +6,11 @@
  * License: GPL v3
  */
 
-#include <iostream>
-#include <unordered_map>
-#include <string>
-#include <cstdint>
-#include <sstream>
-#include <vector>
-
 
 #include "utils.hpp"
 
 #include "heap.hpp"
-#include "heapobject.hpp"
+#include "heapobjects.hpp"
 #include "scope.hpp"
 #include "stack.hpp"
 #include "env.hpp"

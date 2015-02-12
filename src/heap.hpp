@@ -1,13 +1,14 @@
 #ifndef HEAP
 #define HEAP
 
-#include <string>
-#include <unordered_map>
 #include "utils.hpp"
 
 struct HeapObject;
 struct Int;
 struct Nothing;
+struct Array;
+struct Map;
+struct Boolean;
 
 struct Heap {
 	std::unordered_map<id_type, HeapObject*> heap;
@@ -23,9 +24,15 @@ struct Heap {
 
 	void add(HeapObject *obj);
 
-	Int* createInt(int_type val);
+	Int* createInt(int_type val, bool reference = false);
 
-	Nothing* createNothing();
+	Nothing* createNothing(bool reference = false);
+
+	Array* createArray(std::vector<HeapObject*> value, bool reference = false);
+
+    Map* createMap(bool reference = false);
+
+    Boolean* createBoolean(bool isTrue, bool reference = false);
 
 	~Heap();
 };

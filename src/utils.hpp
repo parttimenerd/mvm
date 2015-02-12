@@ -5,6 +5,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
+#include <unordered_map>
+#include <cstdint>
 
 /** Type of a normal id in the following */
 typedef uint64_t id_type;
