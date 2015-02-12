@@ -44,15 +44,11 @@ endif()
   
     #endforeach()
 
-# Clang specific libraries
+###############
+### TARGETS ###
+###############
 
-IF (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  # link libc++
-  TARGET_LINK_LIBRARIES(mvm_executable c++)
-  TARGET_LINK_LIBRARIES(mvm_library c++)
-ENDIF()
-
-## Collect executables in ./src
+# Collect executables in ./src
 FILE(GLOB sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
 
 FILE(GLOB library_sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
@@ -80,3 +76,14 @@ ADD_EXECUTABLE(mvm_executable
 SET_TARGET_PROPERTIES(mvm_executable PROPERTIES LINKER_LANGUAGE CXX)
 SET_TARGET_PROPERTIES(mvm_executable PROPERTIES OUTPUT_NAME mvm)
 
+###################
+### END TARGETS ###
+###################
+
+# Clang specific libraries
+
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  # link libc++
+  TARGET_LINK_LIBRARIES(mvm_executable c++)
+  TARGET_LINK_LIBRARIES(mvm_library c++)
+ENDIF()
