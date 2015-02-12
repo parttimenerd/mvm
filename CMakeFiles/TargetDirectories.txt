@@ -1,3 +1,0 @@
-/home/parttimenerd/Code/lang/vm/CMakeFiles/heap.dir
-/home/parttimenerd/Code/lang/vm/CMakeFiles/main.dir
-/home/parttimenerd/Code/lang/vm/CMakeFiles/mvm.dir

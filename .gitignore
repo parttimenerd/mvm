@@ -1,2 +1,7 @@
-CMakeFiles
+CMakeFiles/
 .swp
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+/mvm
+.a

@@ -1,5 +1,4 @@
-#ifndef STACK
-#define STACK
+#pragma once
 
 #include <vector>
 #include <string>
@@ -55,5 +54,3 @@ struct Stack {
 
     std::string str();
 };
-
-#endif

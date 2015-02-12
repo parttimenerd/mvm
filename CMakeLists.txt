@@ -44,28 +44,46 @@ endif()
   
     #endforeach()
 
+###############
+### TARGETS ###
+###############
 
-## Generate executables in ./src
-file(GLOB sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
+# Collect executables in ./src
+FILE(GLOB sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
 
-file(GLOB implementation_headers "src/*.hpp")
+FILE(GLOB library_sources RELATIVE ${PROJECT_SOURCE_DIR} src/*.cpp)
+LIST(REMOVE_ITEM library_sources ${PROJECT_SOURCE_DIR} src/main.cpp)
 
-add_library(mvm
-	${implementation_headers}
+###################
+### mvm_library ###
+###################
+
+ADD_LIBRARY(mvm_library
+	${library_sources}
 )
 
-target_link_libraries(mvm)
+SET_TARGET_PROPERTIES(mvm_library PROPERTIES LINKER_LANGUAGE CXX)
+SET_TARGET_PROPERTIES(mvm_library PROPERTIES OUTPUT_NAME mvm)
 
-foreach(path IN LISTS sources)
+######################
+### mvm_executable ###
+######################
 
-  get_filename_component(target ${path} NAME_WE)
-  add_executable(${target} ${path})  
+ADD_EXECUTABLE(mvm_executable
+	${sources}
+)
 
-  TARGET_LINK_LIBRARIES(${target} ${Boost_LIBRARIES})
+SET_TARGET_PROPERTIES(mvm_executable PROPERTIES LINKER_LANGUAGE CXX)
+SET_TARGET_PROPERTIES(mvm_executable PROPERTIES OUTPUT_NAME mvm)
 
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    # link libc++
-    TARGET_LINK_LIBRARIES(${target} c++)
-  endif()
+###################
+### END TARGETS ###
+###################
 
-endforeach()
+# Clang specific libraries
+
+IF (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  # link libc++
+  TARGET_LINK_LIBRARIES(mvm_executable c++)
+  TARGET_LINK_LIBRARIES(mvm_library c++)
+ENDIF()
