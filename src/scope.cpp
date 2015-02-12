@@ -4,7 +4,7 @@
 #include "heap.hpp"
 #include "heapobjects.hpp"
 
-/*Scope::Scope(Heap *heap) : HeapObject(Type::SSCOPE, heap) {
+/*Scope::Scope(Heap *heap) : HeapObject(Type::SCOPE, heap) {
     isRoot = true;
 }*/
 

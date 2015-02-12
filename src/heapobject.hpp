@@ -1,5 +1,4 @@
-#ifndef HEAP_OBJECT
-#define HEAP_OBJECT
+#pragma once
 
 #include "utils.hpp"
 
@@ -70,5 +69,3 @@ struct HeapObject {
 	  heap->dereference(this);
 	}
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef SCOPE_HPP
-#define SCOPE_HPP
+#pragma once
 
 #include "utils.hpp"
 #include "heapobject.hpp"
@@ -36,5 +35,3 @@ struct Scope : HeapObject {
 
     std::string str_large();
 };
-
-#endif

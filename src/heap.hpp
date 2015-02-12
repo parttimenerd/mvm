@@ -1,5 +1,4 @@
-#ifndef HEAP
-#define HEAP
+#pragma once
 
 #include "utils.hpp"
 
@@ -36,5 +35,3 @@ struct Heap {
 
 	~Heap();
 };
-
-#endif
