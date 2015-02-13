@@ -4,6 +4,7 @@
 #include "scope.hpp"
 #include "heapobjects.hpp"
 #include "heap.hpp"
+#include "parser.hpp"
 
 CodeFunction::CodeFunction(Heap *heap, Scope *parent_scope,
     std::vector<std::string> parameters, std::vector<Line*> lines) : Function(heap, 0) {

@@ -3,21 +3,7 @@
 #include "heapobject.hpp"
 #include "env.hpp"
 
-enum class LineType : uint8_t {
-
-};
-
-/**
- * A line of code
- */
-struct Line {
-	LineType type;
-
-	Line(LineType type){
-		this->type = type;
-	}
-};
-
+struct Line;
 
 struct Function : HeapObject {
 	size_t parameter_count;

@@ -7,6 +7,8 @@
 #include <map>
 #include <unordered_map>
 #include <cstdint>
+#include <algorithm>
+
 
 /** Type of a normal id in the following */
 typedef uint64_t id_type;
