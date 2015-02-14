@@ -7,7 +7,7 @@
 struct String : HeapObject {
 	std::string value;
 
-	String(Heap *heap, std::string value) : HeapObject(Type::STRING, heap) {
+	String(Env *env, std::string value) : HeapObject(Type::STRING, env) {
 		this->value = value;
 	}
 

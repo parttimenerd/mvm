@@ -13,7 +13,7 @@ struct Map : HeapObject {
     std::map<HeapObject*, HeapObject*> map;
     Type content_type = Type::NOTHING;
 
-	Map(Heap *heap) : HeapObject(Type::MAP, heap) {}
+	Map(Env *env) : HeapObject(Type::MAP, env) {}
 
 	std::string str(){
         std::ostringstream stream;
@@ -26,7 +26,7 @@ struct Map : HeapObject {
 	}
 
 	HeapObject* get(HeapObject *key){
-        return has(key) ? map[key] : heap->createNothing();
+        return has(key) ? map[key] : env->createNothing();
 	}
 
 	size_t size(){
@@ -38,7 +38,7 @@ struct Map : HeapObject {
             if (key->type == Type::STRING || key->type == Type::INT){
                 content_type = key->type;
             } else {
-                //throw exeception
+                throw "Key has wrong type";
             }
         }
         if (key->type == content_type){

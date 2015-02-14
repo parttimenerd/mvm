@@ -6,7 +6,7 @@
 #include "heapobject.hpp"
 
 struct Nothing : HeapObject {
-	Nothing(Heap *heap) : HeapObject(Type::NOTHING, heap) {}
+	Nothing(Env *env) : HeapObject(Type::NOTHING, env) {}
 
 	std::string str(){
 		return "nothing";

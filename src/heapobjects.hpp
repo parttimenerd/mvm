@@ -8,5 +8,6 @@
 #include "string.hpp"
 #include "array.hpp"
 #include "map.hpp"
+#include "function.hpp"
 
 #endif

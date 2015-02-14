@@ -4,11 +4,7 @@
 #include "heap.hpp"
 #include "heapobjects.hpp"
 
-/*Scope::Scope(Heap *heap) : HeapObject(Type::SCOPE, heap) {
-    isRoot = true;
-}*/
-
-Scope::Scope(Heap *heap, Scope *scope) : HeapObject(Type::SCOPE, heap) {
+Scope::Scope(Env *env, Scope *scope) : HeapObject(Type::SCOPE, env) {
     parent = scope;
     if (scope == 0){
         isRoot = true;
@@ -60,7 +56,7 @@ HeapObject* Scope::get(std::string varname, bool returnNothing){
     if (variables.find(varname) != variables.end()){
         return variables[varname];
     } else if (isRoot){
-        return returnNothing ? heap->createNothing() : 0;
+        return returnNothing ? env->createNothing() : 0;
     } else {
         return parent->get(varname, returnNothing);
     }
@@ -78,7 +74,7 @@ bool Scope::has(std::string varname, bool recursive){
 }
 
 Scope* Scope::createChild(){
-    return new Scope(heap, this);
+    return new Scope(env, this);
 }
 
 std::string Scope::str(){

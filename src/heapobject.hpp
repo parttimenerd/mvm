@@ -26,19 +26,18 @@ struct HeapObject {
 	id_type id;
 	uint32_t reference_count = 0;
 
-	Heap *heap;
+	Env *env;
 
 	/**
-	 * Initialize a new HeapObject on the passed heap
+	 * Initialize a new HeapObject in the passed environment
 	 *
 	 * @param type type of the object (@see Type)
-	 * @param heap passed heap
+	 * @param env passed environment
 	 */
-	HeapObject(Type type, Heap *heap){
+	HeapObject(Type type, Env *env){
 		this->type = type;
-		this->heap = heap;
-		this->heap->add(this);
-		std::cout << heap->str();
+		this->env = env;
+		this->env->add(this);
 	}
 
 	virtual std::string str(){
@@ -62,10 +61,10 @@ struct HeapObject {
 	}
 
 	void reference(){
-	  reference_count++;
+        reference_count++;
 	}
 
 	void dereference(){
-	  heap->dereference(this);
+        env->dereference(this);
 	}
 };

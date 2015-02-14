@@ -12,7 +12,7 @@ struct Int : HeapObject {
 	int_type value;
 
 
-	Int(Heap *heap, int_type value) : HeapObject(Type::INT, heap) {
+	Int(Env *env, int_type value) : HeapObject(Type::INT, env) {
 		this->value = value;
 	}
 

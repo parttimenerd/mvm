@@ -2,12 +2,14 @@
 
 #include "function.hpp"
 #include "scope.hpp"
-#include "heapobjects.hpp"
+#include "heapobject.hpp"
 #include "heap.hpp"
 #include "parser.hpp"
+#include "array.hpp"
+#include "nothing.hpp"
 
-CodeFunction::CodeFunction(Heap *heap, Scope *parent_scope,
-    std::vector<std::string> parameters, std::vector<Line*> lines) : Function(heap, 0) {
+CodeFunction::CodeFunction(Env *env, Scope *parent_scope,
+    std::vector<std::string> parameters, std::vector<Line*> lines) : Function(env, 0) {
     this->parent_scope = parent_scope;
     this->parameter_count = parameters.size();
     this->parameters = parameters;
@@ -20,17 +22,17 @@ Scope* CodeFunction::initFunctionScope(std::vector<HeapObject*> arguments,
     for (size_t i = 0; i < parameters.size(); i++){
         scope->setHere(parameters.at(i), arguments.at(i));
     }
-    scope->setHere("arguments", heap->createArray(miscArguments, true));
+    scope->setHere(std::string{"arguments"}, env->createArray(miscArguments, true));
     return scope;
 }
 
-void CodeFunction::exec(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
+void CodeFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
     Scope *functionBaseScope = initFunctionScope(arguments, miscArguments);
     env->stack->pushFrame();
 
     // execute the code lines and wrap it with a try catch
 
-    HeapObject *returnVal = heap->createNothing(); //= env->interpreter->interpret(env, functionBaseScope, lines);
+    HeapObject *returnVal = env->createNothing(); //= env->interpret(env, functionBaseScope, lines);
 
     env->stack->popFrameAndAddReturn(returnVal);
     while (functionBaseScope != parent_scope){
@@ -40,4 +42,9 @@ void CodeFunction::exec(Env *env, std::vector<HeapObject*> arguments, std::vecto
         functionBaseScope = parent;
     }
 
+}
+
+void CPPFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
+    auto ret_val = this->impl_func(env, arguments, miscArguments);
+    env->stack->push(ret_val, true);
 }

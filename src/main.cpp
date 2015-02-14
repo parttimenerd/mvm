@@ -21,8 +21,9 @@
 
 int main(){
 	Heap heap;
-	Int* integer = heap.createInt(3);
-	std::cout << heap.str();
+	Env env;
+	Int* integer = env.createInt(3);
+	std::cout << env.heap->str();
 
 	Stack stack;
 	stack.pushFrame();
@@ -31,22 +32,22 @@ int main(){
 	std::cout << stack.str();
 	stack.popFrame(true);
 	std::cout << stack.str();
-	std::cout << heap.str();
+	std::cout << env.heap->str();
 	std::cout << "----------\n";
-	Scope *scope = new Scope(&heap);
+	Scope *scope = new Scope(&env);
 	//std::cout << scope->str();
-	scope->set("abc", heap.createInt(3));
+	scope->set("abc", env.createInt(3));
 	//std::cout << scope->str_large();
-	scope->set("abc2", heap.createNothing());
+	scope->set("abc2", env.createNothing());
 	//std::cout << scope->str_large();
-	scope->set("abc", heap.createInt(7));
-	std::cout << heap.str();
+	scope->set("abc", env.createInt(7));
+	std::cout << env.heap->str();
 	//std::cout << scope->str_large();
 	Scope *childScope = scope->createChild();
 	//childScope->set("abc", heap.createInt(5));
-	heap.str();
+	//heap.str();
 	//childScope->set("abc3", heap.createNothing());
 	std::cout << childScope->str_large();
 	std::cout << "#############\n";
-	std::cout << heap.str();
+	std::cout << env.heap->str();
 }

@@ -3,6 +3,7 @@
 
 #include "utils.hpp"
 #include "heapobject.hpp"
+#include "env.hpp"
 
 /*
  * Resizable array
@@ -10,7 +11,7 @@
 struct Array : HeapObject {
     std::vector<HeapObject*> value;
 
-	Array(Heap *heap, std::vector<HeapObject*> value) : HeapObject(Type::ARRAY, heap) {
+	Array(Env *env, std::vector<HeapObject*> value) : HeapObject(Type::ARRAY, env) {
 		this->value = value;
 	}
 

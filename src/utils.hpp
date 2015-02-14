@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <cstdint>
 #include <algorithm>
+#include <iterator>
+#include <functional>
 
 
 /** Type of a normal id in the following */

@@ -9,7 +9,7 @@ struct Boolean : HeapObject {
 
     bool isTrue;
 
-	Boolean(Heap *heap, bool isTrue) : HeapObject(Type::BOOLEAN, heap) {
+	Boolean(Env *env, bool isTrue) : HeapObject(Type::BOOLEAN, env) {
         this->isTrue = isTrue;
 	}
 

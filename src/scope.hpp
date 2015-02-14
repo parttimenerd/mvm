@@ -12,7 +12,7 @@ struct Scope : HeapObject {
 
    // Scope(Heap *heap);
 
-    Scope(Heap *heap, Scope *scope = 0);
+    Scope(Env *env, Scope *scope = 0);
 
     Scope* root(){
         if (isRoot){
