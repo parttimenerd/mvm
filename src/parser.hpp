@@ -4,13 +4,20 @@
 #include <istream>
 
 enum class LineType : uint8_t {
-    CALL_N,
+    CALL,
     PUSH_INT,
+    PUSH_STRING,
+    PUSH_VAR,
+    RETURN,
     ERROR
 };
 
 static std::vector<std::string> type_names = {
-    "CALL_N",
+    "CALL",
+    "PUSH_INT",
+    "PUSH_STRING",
+    "PUSH_VAR",
+    "RETURN",
     "ERROR"
 };
 
@@ -100,6 +107,14 @@ struct Parser {
         throw stream.str();
     }
 
+    std::vector<Line*> lines(){
+        std::vector<Line*> vec;
+        while (!ended){
+            vec.push_back(nextCodeLine());
+        }
+        return vec;
+    }
+
     virtual Line* nextCodeLine() = 0;
 };
 
@@ -128,12 +143,20 @@ struct VerboseParser : Parser {
         std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), std::back_inserter(tokens));
         LineType type = stringToLineType(tokens[0]);
         switch (type){
-            case LineType::CALL_N:
+            case LineType::CALL:
             case LineType::PUSH_INT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
                 return new ArgumentedLine<int_type>(type, strToInt(tokens[1]));
+            case LineType::PUSH_STRING:
+            case LineType::PUSH_VAR:
+                if (tokens.size() != 2){
+                    error("Expected one argument, got more");
+                }
+                return new ArgumentedLine<std::string>(type, strToString(tokens[1]));
+            case LineType::RETURN:
+                return new Line(type);
             case LineType::ERROR:
             default:
                 error("Don't know what to do with ", line());

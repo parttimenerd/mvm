@@ -14,6 +14,7 @@ struct Array;
 struct Map;
 struct Boolean;
 struct Function;
+struct String;
 
 struct Env {
     Heap *heap;
@@ -38,6 +39,8 @@ struct Env {
     Map* createMap(bool reference = false);
 
     Boolean* createBoolean(bool isTrue, bool reference = false);
+
+    String* createString(std::string value, bool reference = false);
 
     /**
      * Add the passed function to the root scope.

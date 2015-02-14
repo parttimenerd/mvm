@@ -58,6 +58,14 @@ Boolean* Env::createBoolean(bool isTrue, bool reference){
     return boolean;
 }
 
+String* Env::createString(std::string value, bool reference){
+    String* str = new String(this, value);
+    if (reference) {
+        str->reference();
+    }
+    return str;
+}
+
 void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments)> implFunc){
     auto *obj = new CPPFunction(this, parameter_count, implFunc);
     root_scope->setHere(name, obj);
