@@ -12,9 +12,7 @@ struct String : HeapObject {
 	}
 
 	std::string str(){
-        std::ostringstream stream;
-        stream << "'" << value << "'";
-		return stream.str();
+		return value;
 	}
 
 	bool operator==(HeapObject* obj){

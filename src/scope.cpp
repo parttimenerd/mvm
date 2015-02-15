@@ -85,7 +85,7 @@ std::string Scope::str(){
 
 std::string Scope::str_large(){
     std::ostringstream stream;
-    stream << str();
+    stream << str() << "\n";
     for (auto t : variables){
         stream << " " << t.first
                << "=" << t.second->str()

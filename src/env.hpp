@@ -16,6 +16,7 @@ struct Boolean;
 struct Function;
 struct String;
 struct Line;
+struct Parser;
 
 struct Env {
     Heap *heap;
@@ -46,6 +47,8 @@ struct Env {
     CodeFunction* createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference = true);
 
     void interpret(Scope *function_base_scope, std::vector<Line*> code);
+
+    void interpret(Parser *parser);
 
     /**
      * Add the passed function to the root scope.

@@ -14,6 +14,7 @@
 #include "scope.hpp"
 #include "stack.hpp"
 #include "env.hpp"
+#include "parser.hpp"
 
 
 // TODO add other line types
@@ -22,8 +23,22 @@
 int main(){
 	Heap heap;
 	Env env;
+	auto print_env = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*>){
+        std::cout << env->heap->str();
+        std::cout << env->stack->str();
+        return env->createNothing();
+	};
+	env.addFunction("print_env", 0, print_env);
+	auto print = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*> misc_args){
+        for (size_t i = 0; i < misc_args.size(); i++){
+            std::cout << misc_args[i]->str();
+        }
+        return env->createNothing();
+	};
+    env.addFunction("print", 0, print);
+    env.interpret(new VerboseParser(&std::cin));
+	/*std::cout << "########-#-#########################\n";
 	Int* integer = env.createInt(3);
-	std::cout << env.heap->str();
 
 	Stack stack;
 	stack.pushFrame();
@@ -49,5 +64,5 @@ int main(){
 	//childScope->set("abc3", heap.createNothing());
 	std::cout << childScope->str_large();
 	std::cout << "#############\n";
-	std::cout << env.heap->str();
+	std::cout << env.heap->str();*/
 }

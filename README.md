@@ -2,6 +2,8 @@ Important note: This README is only a rough draft and is only conceptually what 
 
 How to build it: run `make release` or run `./run.sh` or (maybe the best way) use cmake.
 
+How to run the hello world program: run `./run.sh < hello_world.mvm`.
+
 MVM
 =================
 My first little Virtual Machine written in C++ (or in Java if it fails).

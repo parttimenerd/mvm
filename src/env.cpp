@@ -78,10 +78,15 @@ CodeFunction* Env::createFunction(Scope *parent_scope, std::vector<std::string> 
 
 void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments)> implFunc){
     auto *obj = new CPPFunction(this, parameter_count, implFunc);
+    obj->name = name;
     root_scope->setHere(name, obj);
 }
 
 void Env::interpret(Scope *function_base_scope, std::vector<Line*> code){
     Interpreter inter(this, function_base_scope, code);
     inter.interpret();
+}
+
+void Env::interpret(Parser *parser){
+    interpret(root_scope, parser->lines());
 }

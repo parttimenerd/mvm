@@ -18,6 +18,7 @@ struct Interpreter {
     void interpret(){
         while (currentPos < code.size() && currentLine()->type != LineType::RETURN){
             interpret(currentLine());
+            currentPos++;
         }
     }
 
@@ -28,6 +29,9 @@ struct Interpreter {
                 break;
             case LineType::PUSH_INT:
                 env->stack->push(env->createInt(toArgLine<int_type>(line)->argument)->transfer());
+                break;
+            case LineType::PUSH_VAR:
+                env->stack->push(scope->get(toArgLine<std::string>(line)->argument)->transfer());
                 break;
             case LineType::CALL_N:
                 call(toArgLine<size_t>(line)->argument);
@@ -41,6 +45,9 @@ struct Interpreter {
             default:
                 throw std::string("Unsupported command ") + line->typeString();
         }
+
+        //std::cout << scope->str_large() << "\n";
+        //std::cout << env->stack->str();
     }
 
     template<typename T>
@@ -48,32 +55,26 @@ struct Interpreter {
         return static_cast<ArgumentedLine<T>*>(line);
     }
 
-    void call(){
-        HeapObject* num = env->stack->pop();
-        size_t arg_num = 0;
-        if (num->type == Type::INT){
-            arg_num = (size_t) static_cast<Int*>(num)->value;
-        }
-        num->dereference();
-        call(arg_num);
-    }
-
-    void call(size_t numberOfArguments){
-        std::vector<HeapObject*> args;
-        while (args.size() < numberOfArguments){
-            args.push_back(env->stack->pop());
+    void call(size_t numberOfArguments = (size_t)-1){
+        if (numberOfArguments == (size_t)-1){
+            HeapObject* num = env->stack->pop();
+            if (num->type == Type::INT){
+                numberOfArguments = (size_t) static_cast<Int*>(num)->value;
+            }
+            num->dereference();
         }
         HeapObject *obj = env->stack->pop();
         if (obj->type != Type::FUNCTION){
-            for (size_t i = 0; i < args.size(); i++){
-                args[i]->dereference();
-            }
             env->stack->push(obj->transfer());
+            std::cerr << "No function\n";
         } else {
-            for (size_t i = 0; i < args.size(); i++){
-                args[i]->transfer();
+            std::vector<HeapObject*> args;
+            while (args.size() < numberOfArguments){
+                args.push_back(env->stack->pop()->transfer());
+                //std::cout << "ARG " << args[args.size() - 1]->str() << "\n";
             }
             Function *func = static_cast<Function*>(obj);
+            //std::cout << func->str();
             func->exec(args);
         }
     }

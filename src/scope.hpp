@@ -23,7 +23,7 @@ struct Scope : HeapObject {
 
     void set(std::string varname, HeapObject* obj, bool reference = true);
 
-    void setHere(std::string varname, HeapObject* obj, bool reference = false);
+    void setHere(std::string varname, HeapObject* obj, bool reference = true);
 
     HeapObject* get(std::string varname, bool returnNothing = true);
 

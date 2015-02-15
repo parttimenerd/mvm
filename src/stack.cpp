@@ -4,6 +4,9 @@
 #include "heapobject.hpp"
 
 HeapObject* Stack::pop(bool dereference){
+    if (stack.empty()){
+        throw std::string("No element on stack, can't pop any more");
+    }
     HeapObject* val = stack.at(stack.size() - 1);
     stack.pop_back();
     if (dereference){
@@ -32,7 +35,6 @@ std::string Stack::str(){
     std::ostringstream stream;
     stream << "stack height=" << size() << "\n";
     size_t frameStackPos = frameStack.size();
-    std::cout << __LINE__ << "\n";
     for (size_t i = size(); i > 0; i--){
         stream << " " << (i - 1) << ":" << "value=" << stack.at(i - 1)->str()
          << ", ref count=" << stack.at(i - 1)->reference_count << "\n";

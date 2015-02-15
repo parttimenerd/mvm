@@ -3,6 +3,8 @@
 #include "utils.hpp"
 #include <istream>
 
+#define L std::cout << __LINE__ << "\n";
+
 enum class LineType : uint8_t {
     CALL,
     CALL_N,
@@ -124,7 +126,10 @@ struct Parser {
     std::vector<Line*> lines(){
         std::vector<Line*> vec;
         while (!ended){
-            vec.push_back(nextCodeLine());
+            Line *line = nextCodeLine();
+            if (line != 0){
+                vec.push_back(line);
+            }
         }
         return vec;
     }
@@ -138,24 +143,27 @@ struct Parser {
  */
 struct VerboseParser : Parser {
 
+    VerboseParser(std::istream *stream, std::string context = "") : Parser(stream, context) {}
+
     std::string line(){
-        if (this->current_line.size() == 0){
-            nextLine();
-        }
-        return line();
+        return current_line;
     }
 
     std::string nextLine(){
         std::getline(*stream, current_line);
-        ended = !stream->good();
+        ended = !stream->good() || current_line == "eof";
         return current_line;
     }
 
     Line* nextCodeLine(){
-        std::istringstream iss(nextLine());
-        std::vector<std::string> tokens;
-        std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), std::back_inserter(tokens));
+        while (nextLine() == "" && !ended);
+        if (ended){
+            return 0;
+        }
+        std::vector<std::string> tokens = tokenize(line());
         LineType type = stringToLineType(tokens[0]);
+        //std::cout << "##" << tokens[0] << "#" << tokens[1] << "#";
+
         switch (type){
             case LineType::CALL_N:
                 if (tokens.size() != 2){
@@ -205,5 +213,17 @@ struct VerboseParser : Parser {
             replaceAll(str, replacements[i], replacements[i + 1]);
         }
         return str;
+    }
+
+    std::vector<std::string> tokenize(std::string str){
+        std::vector<std::string> tokens;
+        size_t split_index = str.find(" ");
+        if (split_index >= str.size()){
+            tokens.push_back(str);
+        } else {
+            tokens.push_back(str.substr(0, split_index));
+            tokens.push_back(str.substr(split_index + 1));
+        }
+        return tokens;
     }
 };

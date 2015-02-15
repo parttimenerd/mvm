@@ -8,6 +8,7 @@ struct Env;
 
 struct Function : HeapObject {
 	size_t parameter_count;
+	std::string name = "";
 
 	Function(Env *env, size_t parameter_count) : HeapObject(Type::FUNCTION, env) {
         this->parameter_count = parameter_count;
@@ -21,12 +22,13 @@ struct Function : HeapObject {
         } else {
             std::vector<HeapObject*> args(arguments.begin(), arguments.begin() + parameter_count);
             std::vector<HeapObject*> misc_args(arguments.begin() + parameter_count, arguments.end());
+            exec(args, misc_args);
         }
     }
 
     std::string str(){
         std::ostringstream stream;
-        stream << "function with " << parameter_count << " parameters";
+        stream << "function " << name << " with " << parameter_count << " parameters";
         return stream.str();
     }
 };
