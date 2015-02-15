@@ -15,6 +15,7 @@ struct Map;
 struct Boolean;
 struct Function;
 struct String;
+struct Line;
 
 struct Env {
     Heap *heap;
@@ -30,17 +31,21 @@ struct Env {
 
 	void add(HeapObject *obj);
 
-    Int* createInt(int_type val, bool reference = false);
+    Int* createInt(int_type val, bool reference = true);
 
-    Nothing* createNothing(bool reference = false);
+    Nothing* createNothing(bool reference = true);
 
-    Array* createArray(std::vector<HeapObject*> value, bool reference = false);
+    Array* createArray(std::vector<HeapObject*> value, bool reference = true);
 
-    Map* createMap(bool reference = false);
+    Map* createMap(bool reference = true);
 
-    Boolean* createBoolean(bool isTrue, bool reference = false);
+    Boolean* createBoolean(bool isTrue, bool reference = true);
 
-    String* createString(std::string value, bool reference = false);
+    String* createString(std::string value, bool reference = true);
+
+    CodeFunction* createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference = true);
+
+    void interpret(Scope *function_base_scope, std::vector<Line*> code);
 
     /**
      * Add the passed function to the root scope.

@@ -3,6 +3,8 @@
 #include "env.hpp"
 #include "scope.hpp"
 #include "heapobjects.hpp"
+#include "interpreter.hpp"
+#include "parser.hpp"
 
 Env::Env(){
     heap = new Heap();
@@ -66,7 +68,20 @@ String* Env::createString(std::string value, bool reference){
     return str;
 }
 
+CodeFunction* Env::createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
+    CodeFunction *func = new CodeFunction(this, parent_scope, parameters, lines);
+    if (reference){
+        func->reference();
+    }
+    return func;
+}
+
 void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments)> implFunc){
     auto *obj = new CPPFunction(this, parameter_count, implFunc);
     root_scope->setHere(name, obj);
+}
+
+void Env::interpret(Scope *function_base_scope, std::vector<Line*> code){
+    Interpreter inter(this, function_base_scope, code);
+    inter.interpret();
 }

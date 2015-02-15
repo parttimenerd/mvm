@@ -32,8 +32,9 @@ void CodeFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObje
 
     // execute the code lines and wrap it with a try catch
 
-    HeapObject *returnVal = env->createNothing(); //= env->interpret(env, functionBaseScope, lines);
+    env->interpret(functionBaseScope, lines);
 
+    HeapObject *returnVal = env->stack->pop();
     env->stack->popFrameAndAddReturn(returnVal);
     while (functionBaseScope != parent_scope){
         Scope *parent = functionBaseScope->parent;

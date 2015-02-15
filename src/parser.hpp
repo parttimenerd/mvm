@@ -5,31 +5,41 @@
 
 enum class LineType : uint8_t {
     CALL,
+    CALL_N,
     PUSH_INT,
     PUSH_STRING,
     PUSH_VAR,
+    PUSH_VAR2,
+    SET_VAR,
+    SET_VAR2,
+    DUP,
     RETURN,
     ERROR
 };
 
 static std::vector<std::string> type_names = {
     "CALL",
+    "CALL_N",
     "PUSH_INT",
     "PUSH_STRING",
     "PUSH_VAR",
+    "PUSH_VAR2",
+    "SET_VAR",
+    "SET_VAR2",
+    "DUP",
     "RETURN",
     "ERROR"
 };
 
-std::string lineTypeToString(LineType type){
+static std::string lineTypeToString(LineType type){
     return type_names[(uint8_t)type];
 }
 
-LineType uintToLineType(uint8_t type){
+static LineType uintToLineType(uint8_t type){
     return static_cast<LineType>(type);
 }
 
-LineType stringToLineType(std::string type){
+static LineType stringToLineType(std::string type){
     auto iter = std::find(type_names.begin(), type_names.end(), type);
     size_t index = std::distance(type_names.begin(), iter);
     if (index == type_names.size()){
@@ -39,7 +49,7 @@ LineType stringToLineType(std::string type){
     }
 }
 
-void replaceAll(std::string& str, const std::string& from, const std::string& to) {
+static void replaceAll(std::string& str, const std::string& from, const std::string& to) {
     if(from.empty()){
         return;
     }
@@ -61,6 +71,10 @@ struct Line {
 	}
 
     virtual std::string str(){
+        return lineTypeToString(type);
+    }
+
+    std::string typeString(){
         return lineTypeToString(type);
     }
 };
@@ -143,19 +157,28 @@ struct VerboseParser : Parser {
         std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(), std::back_inserter(tokens));
         LineType type = stringToLineType(tokens[0]);
         switch (type){
-            case LineType::CALL:
+            case LineType::CALL_N:
+                if (tokens.size() != 2){
+                    error("Expected one argument, got more");
+                }
+                return new ArgumentedLine<size_t>(type, strToNum<size_t>(tokens[1]));
             case LineType::PUSH_INT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<int_type>(type, strToInt(tokens[1]));
+                return new ArgumentedLine<int_type>(type, strToNum<int_type>(tokens[1]));
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
+            case LineType::SET_VAR:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
                 return new ArgumentedLine<std::string>(type, strToString(tokens[1]));
             case LineType::RETURN:
+            case LineType::PUSH_VAR2:
+            case LineType::SET_VAR2:
+            case LineType::DUP:
+            case LineType::CALL:
                 return new Line(type);
             case LineType::ERROR:
             default:
@@ -164,8 +187,9 @@ struct VerboseParser : Parser {
         return 0;
     }
 
-    int_type strToInt(std::string str){
-        int_type number;
+    template<typename T>
+    T strToNum(std::string str){
+        T number;
         if (!(std::istringstream(str) >> number)) {
             error("Expected Number, got ", str);
         }

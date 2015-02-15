@@ -15,6 +15,8 @@ struct Stack {
 
 	void push(HeapObject *obj, bool reference = true);
 
+    void dup();
+
 	bool empty(){
 		return stack.size() == 0;
 	}

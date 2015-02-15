@@ -67,4 +67,9 @@ struct HeapObject {
 	void dereference(){
         env->dereference(this);
 	}
+
+	HeapObject* transfer(){
+        reference_count--;
+        return this;
+	}
 };

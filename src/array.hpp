@@ -33,8 +33,11 @@ struct Array : HeapObject {
         return value.size();
 	}
 
-	void set(size_t i, HeapObject *obj){
+	void set(size_t i, HeapObject *obj, bool reference = true){
         value[i] = obj;
+        if (reference){
+            obj->reference();
+        }
 	}
 
 	void add(HeapObject *obj){

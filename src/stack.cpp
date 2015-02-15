@@ -23,6 +23,11 @@ void Stack::push(HeapObject *obj, bool _reference){
 	}
 }
 
+void Stack::dup(){
+    HeapObject *obj = stack.at(stack.size() - 1);
+    push(obj);
+}
+
 std::string Stack::str(){
     std::ostringstream stream;
     stream << "stack height=" << size() << "\n";
