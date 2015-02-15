@@ -26,14 +26,14 @@ int main(){
 	auto print_env = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*>){
         std::cout << env->heap->str();
         std::cout << env->stack->str();
-        return env->createNothing();
+        return env->createNothing(false);
 	};
 	env.addFunction("print_env", 0, print_env);
 	auto print = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*> misc_args){
         for (size_t i = 0; i < misc_args.size(); i++){
             std::cout << misc_args[i]->str();
         }
-        return env->createNothing();
+        return env->createNothing(false);
 	};
     env.addFunction("print", 0, print);
     env.interpret(new VerboseParser(&std::cin));

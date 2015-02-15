@@ -44,6 +44,10 @@ struct HeapObject {
 		return "";
 	}
 
+    virtual std::string escapedStr(){
+        return str();
+    }
+
 	virtual std::vector<HeapObject*> getReferencedObjects() {
 		return std::vector<HeapObject*>();
 	}

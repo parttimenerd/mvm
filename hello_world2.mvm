@@ -1,0 +1,16 @@
+# push the string to be interpreted on the stack
+PUSH_STRING Moinsen...\n
+# push the function print the current environment (heap and stack) on the stack
+PUSH_VAR print_env
+# call the function (without any arguments)
+CALL_N 0
+# discard the return value
+POP
+# push the print function on the stack to print "Moinsen...\n"
+PUSH_VAR print
+# finally call it
+CALL_N 1
+# print the environment again
+PUSH_VAR print_env
+CALL_N 0
+

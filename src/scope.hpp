@@ -34,4 +34,12 @@ struct Scope : HeapObject {
     std::string str();
 
     std::string str_large();
+
+    virtual std::vector<HeapObject*> getReferencedObjects() {
+		if (isRoot){
+            return {};
+		} else {
+            return {parent};
+		}
+	}
 };

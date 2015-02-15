@@ -14,6 +14,7 @@ enum class LineType : uint8_t {
     PUSH_VAR2,
     SET_VAR,
     SET_VAR2,
+    POP,
     DUP,
     RETURN,
     ERROR
@@ -28,6 +29,7 @@ static std::vector<std::string> type_names = {
     "PUSH_VAR2",
     "SET_VAR",
     "SET_VAR2",
+    "POP",
     "DUP",
     "RETURN",
     "ERROR"
@@ -152,6 +154,9 @@ struct VerboseParser : Parser {
     std::string nextLine(){
         std::getline(*stream, current_line);
         ended = !stream->good() || current_line == "eof";
+        if (current_line.size() > 0 && current_line[0] == '#'){ //skip comments
+            return nextLine();
+        }
         return current_line;
     }
 
@@ -186,6 +191,7 @@ struct VerboseParser : Parser {
             case LineType::PUSH_VAR2:
             case LineType::SET_VAR2:
             case LineType::DUP:
+            case LineType::POP:
             case LineType::CALL:
                 return new Line(type);
             case LineType::ERROR:

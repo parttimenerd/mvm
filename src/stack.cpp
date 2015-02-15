@@ -36,7 +36,7 @@ std::string Stack::str(){
     stream << "stack height=" << size() << "\n";
     size_t frameStackPos = frameStack.size();
     for (size_t i = size(); i > 0; i--){
-        stream << " " << (i - 1) << ":" << "value=" << stack.at(i - 1)->str()
+        stream << " " << (i - 1) << ":" << "value=" << stack.at(i - 1)->escapedStr()
          << ", ref count=" << stack.at(i - 1)->reference_count << "\n";
          if (frameStackPos > 0 && frameStack.at(frameStackPos - 1) == i - 1){
             frameStackPos--;

@@ -39,13 +39,16 @@ struct Interpreter {
             case LineType::CALL:
                 call();
                 break;
+            case LineType::POP:
+                env->stack->popAndDeref();
+                break;
             case LineType::DUP:
                 env->stack->dup();
                 break;
             default:
                 throw std::string("Unsupported command ") + line->typeString();
         }
-
+        //std::cout << env->stack->str() << "+++#############" << line->str() << "\n";
         //std::cout << scope->str_large() << "\n";
         //std::cout << env->stack->str();
     }

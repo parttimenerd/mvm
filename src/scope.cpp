@@ -74,7 +74,9 @@ bool Scope::has(std::string varname, bool recursive){
 }
 
 Scope* Scope::createChild(){
-    return new Scope(env, this);
+    Scope *scope = new Scope(env, this);
+    scope->reference();
+    return scope;
 }
 
 std::string Scope::str(){
@@ -88,7 +90,7 @@ std::string Scope::str_large(){
     stream << str() << "\n";
     for (auto t : variables){
         stream << " " << t.first
-               << "=" << t.second->str()
+               << "=" << t.second->escapedStr()
                << ", ref count=" << t.second->reference_count << "\n";
     }
     if (!isRoot){

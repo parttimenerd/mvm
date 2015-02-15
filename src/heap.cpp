@@ -17,7 +17,7 @@ std::string Heap::str(){
     stream << "heap count=" << heap.size() << "\n";
     for (auto t : this->heap){
         stream << " " << t.first << ":"
-               << "value=" << t.second->str()
+               << "value=" << t.second->escapedStr()
                << ", ref count=" << t.second->reference_count << "\n";
     }
     return stream.str();
@@ -25,7 +25,8 @@ std::string Heap::str(){
 }
 
 void Heap::add(HeapObject *obj){
-    obj->id = max_id++;
+    obj->id = max_id;
+    max_id++;
     heap.emplace(obj->id, obj);
 }
 
