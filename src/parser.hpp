@@ -8,14 +8,19 @@
 enum class LineType : uint8_t {
     CALL,
     CALL_N,
+    PUSH_NOTHING,
+    PUSH_BOOLEAN,
     PUSH_INT,
     PUSH_STRING,
+    PUSH_ARRAY,
+    PUSH_MAP,
     PUSH_VAR,
     PUSH_VAR2,
     SET_VAR,
     SET_VAR2,
     POP,
     DUP,
+    JUMP_IF,
     RETURN,
     ERROR
 };
@@ -23,14 +28,19 @@ enum class LineType : uint8_t {
 static std::vector<std::string> type_names = {
     "CALL",
     "CALL_N",
+    "PUSH_NOTHING",
+    "PUSH_BOOLEAN",
     "PUSH_INT",
     "PUSH_STRING",
+    "PUSH_ARRAY",
+    "PUSH_MAP",
     "PUSH_VAR",
     "PUSH_VAR2",
     "SET_VAR",
     "SET_VAR2",
     "POP",
     "DUP",
+    "JUMP_IF",
     "RETURN",
     "ERROR"
 };
@@ -176,6 +186,7 @@ struct VerboseParser : Parser {
                 }
                 return new ArgumentedLine<size_t>(type, strToNum<size_t>(tokens[1]));
             case LineType::PUSH_INT:
+            case LineType::JUMP_IF:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -187,6 +198,14 @@ struct VerboseParser : Parser {
                     error("Expected one argument, got more");
                 }
                 return new ArgumentedLine<std::string>(type, strToString(tokens[1]));
+            case LineType::PUSH_BOOLEAN:
+                if (tokens.size() != 2){
+                    error("Expected one argument, got more");
+                }
+                return new ArgumentedLine<bool>(type, tokens[1] == "true");
+            case LineType::PUSH_NOTHING:
+            case LineType::PUSH_ARRAY:
+            case LineType::PUSH_MAP:
             case LineType::RETURN:
             case LineType::PUSH_VAR2:
             case LineType::SET_VAR2:

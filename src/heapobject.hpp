@@ -76,4 +76,6 @@ struct HeapObject {
         reference_count--;
         return this;
 	}
+
+	virtual ~HeapObject() = default;
 };

@@ -22,6 +22,7 @@ struct Env {
     Heap *heap;
     Stack *stack;
     Scope *root_scope;
+    Nothing *nothing;
 
     Env();
 
@@ -36,7 +37,7 @@ struct Env {
 
     Nothing* createNothing(bool reference = true);
 
-    Array* createArray(std::vector<HeapObject*> value, bool reference = true);
+    Array* createArray(std::vector<HeapObject*> value = std::vector<HeapObject*>(), bool reference = true);
 
     Map* createMap(bool reference = true);
 

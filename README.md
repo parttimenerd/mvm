@@ -1,8 +1,10 @@
 Important note: This README is only a rough draft and is only conceptually what I'm going to implement.
 
-How to build it: run `make release` or run `./run.sh` or (maybe the best way) use cmake.
+How to build it: `./build.sh`
 
-How to run the hello world program: run `./run.sh < hello_world.mvm`.
+How to run the hello world program: run `./mvm < examples/hello_world.mvm`.
+
+How to run the test suite: run `./test.sh` (it requires ruby and colordiff to be installed)
 
 MVM
 =================

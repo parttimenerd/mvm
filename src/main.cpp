@@ -26,16 +26,54 @@ int main(){
 	auto print_env = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*>){
         std::cout << env->heap->str();
         std::cout << env->stack->str();
-        return env->createNothing(false);
+        return env->createNothing()->transfer();
 	};
 	env.addFunction("print_env", 0, print_env);
 	auto print = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*> misc_args){
         for (size_t i = 0; i < misc_args.size(); i++){
             std::cout << misc_args[i]->str();
         }
-        return env->createNothing(false);
+        return env->createNothing()->transfer();
 	};
     env.addFunction("print", 0, print);
+    auto println = [](Env* env, std::vector<HeapObject*>, std::vector<HeapObject*> misc_args){
+        for (size_t i = 0; i < misc_args.size(); i++){
+            std::cout << misc_args[i]->str();
+        }
+        std::cout << "\n";
+        return env->createNothing()->transfer();
+    };
+    env.addFunction("println", 0, println);
+    auto binary_math_op = [](std::function<int_type(int_type, int_type)> math_op, int_type neutral_elem, Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        int_type result = 0;
+        auto func = [math_op, neutral_elem](std::vector<HeapObject*> arr){
+            int_type res = neutral_elem;
+            for (size_t i = 0; i < arr.size(); i++){
+                if (arr[i]->type == Type::INT){
+                    res = math_op(res, static_cast<Int*>(arr[i])->value);
+                }
+            }
+            return res;
+        };
+        result = math_op(func(args), func(misc_args));
+        return env->createInt(result)->transfer();
+    };
+    auto add = [binary_math_op](Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        return binary_math_op([](int_type x, int_type y){ return x + y; }, 0, env, args, misc_args);
+    };
+    env.addFunction("add", 2, add);
+    auto mul = [binary_math_op](Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        return binary_math_op([](int_type x, int_type y){ return x * y; }, 1, env, args, misc_args);
+    };
+    env.addFunction("mul", 2, mul);
+    auto sub = [binary_math_op](Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        return binary_math_op([](int_type x, int_type y){ return x - y; }, 0, env, args, misc_args);
+    };
+    env.addFunction("sub", 2, sub);
+    auto div = [binary_math_op](Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        return binary_math_op([](int_type x, int_type y){ return x / y; }, 1, env, args, misc_args);
+    };
+    env.addFunction("div", 2, div);
     env.interpret(new VerboseParser(&std::cin));
 	/*std::cout << "########-#-#########################\n";
 	Int* integer = env.createInt(3);

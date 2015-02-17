@@ -8,6 +8,7 @@ void Heap::dereference(HeapObject *object){
 		for (auto *obj : object->getReferencedObjects()){
 			dereference(obj);
 		}
+		delete object;
 		heap.erase(object->id);
 	}
 }

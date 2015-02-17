@@ -11,6 +11,8 @@ Env::Env(){
     stack = new Stack();
     root_scope = new Scope(this);
     root_scope->reference();
+    nothing = new Nothing(this);
+    nothing->reference();
 }
 
 void Env::dereference(HeapObject *obj){
@@ -30,7 +32,6 @@ Int* Env::createInt(int_type val, bool reference){
 }
 
 Nothing* Env::createNothing(bool reference){
-    static Nothing *nothing = new Nothing(this);
     if (reference) {
         nothing->reference();
     }

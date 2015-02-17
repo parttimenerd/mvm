@@ -27,17 +27,51 @@ struct Interpreter {
             case LineType::PUSH_STRING:
                 env->stack->push(env->createString(toArgLine<std::string>(line)->argument)->transfer());
                 break;
+            case LineType::PUSH_NOTHING:
+                env->stack->push(env->createNothing()->transfer());
+                break;
+            case LineType::PUSH_BOOLEAN:
+                env->stack->push(env->createBoolean(toArgLine<bool>(line)->argument)->transfer());
+                break;
             case LineType::PUSH_INT:
                 env->stack->push(env->createInt(toArgLine<int_type>(line)->argument)->transfer());
                 break;
+            case LineType::PUSH_ARRAY:
+                env->stack->push(env->createArray()->transfer());
+                break;
+            case LineType::PUSH_MAP:
+                env->stack->push(env->createMap()->transfer());
             case LineType::PUSH_VAR:
                 env->stack->push(scope->get(toArgLine<std::string>(line)->argument)->transfer());
+                break;
+            case LineType::SET_VAR:
+                scope->set(toArgLine<std::string>(line)->argument, env->stack->pop()->transfer());
+                break;
+            case LineType::SET_VAR2:
+                {
+                    auto *obj = env->stack->pop();
+                    if (obj->type == Type::STRING){
+                        scope->set(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
+                    } else {
+                        throw std::string("Expected string on stack for SET_VAR2 command");
+                    }
+                    obj->dereference();
+                }
                 break;
             case LineType::CALL_N:
                 call(toArgLine<size_t>(line)->argument);
                 break;
             case LineType::CALL:
                 call();
+                break;
+            case LineType::JUMP_IF:
+                {
+                    HeapObject *obj = env->stack->pop();
+                    if (obj->type == Type::BOOLEAN && static_cast<Boolean*>(obj)->isTrue){
+                        currentPos += toArgLine<int_type>(line)->argument;
+                    }
+                    obj->dereference();
+                }
                 break;
             case LineType::POP:
                 env->stack->popAndDeref();
@@ -58,8 +92,8 @@ struct Interpreter {
         return static_cast<ArgumentedLine<T>*>(line);
     }
 
-    void call(size_t numberOfArguments = (size_t)-1){
-        if (numberOfArguments == (size_t)-1){
+    void call(size_t numberOfArguments = 99999999999){
+        if (numberOfArguments == 99999999999){
             HeapObject* num = env->stack->pop();
             if (num->type == Type::INT){
                 numberOfArguments = (size_t) static_cast<Int*>(num)->value;

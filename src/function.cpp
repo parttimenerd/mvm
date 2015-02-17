@@ -47,7 +47,7 @@ void CodeFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObje
 
 void CPPFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
     auto ret_val = this->impl_func(env, arguments, miscArguments);
-    env->stack->push(ret_val, true);
+    env->stack->push(ret_val);
     for (auto *arg : arguments){
         arg->dereference();
     }

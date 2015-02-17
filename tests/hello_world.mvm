@@ -1,0 +1,6 @@
+# push the string to be printed on the stack
+PUSH_STRING Moin.\n
+# push the print function on the stack
+PUSH_VAR print
+# call the function on top of the stack (it's print) and pass it one argument from the stack
+CALL_N 1

@@ -5,3 +5,7 @@ Makefile
 cmake_install.cmake
 /mvm
 .a
+.config
+.creator
+.files
+.includes
