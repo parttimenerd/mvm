@@ -92,6 +92,17 @@ struct Interpreter {
             case LineType::PRINT_STACK:
                 std::cout << env->stack->str();
                 break;
+            case LineType::ASSERT_STACK_HEIGHT:
+            {
+                size_t expectedHeight = toArgLine<size_t>(line)->argument;
+                if (env->stack->size() != expectedHeight){
+                    std::ostringstream stream;
+                    stream << "Expected stack of height " << expectedHeight
+                        << " not " << env->stack->size();
+                    throw stream.str();
+                }
+                break;
+            }
             case LineType::COMMENT:
                 break;
             default:
@@ -162,7 +173,7 @@ struct Interpreter {
     void error(std::string msg, std::string msg1 = ""){
         std::ostringstream stream;
         stream << "Error in line " << currentPos << ": " << msg << msg1;
-        std::cerr << stream.str() << "\n";
+        //std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 };

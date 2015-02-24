@@ -25,7 +25,8 @@ enum class LineType : uint8_t {
     RETURN,
     ERROR,
     COMMENT,
-    PRINT_STACK
+    PRINT_STACK,
+    ASSERT_STACK_HEIGHT
 };
 
 static std::vector<std::string> type_names = {
@@ -48,7 +49,8 @@ static std::vector<std::string> type_names = {
     "RETURN",
     "ERROR",
     "COMMENT",
-    "PRINT_STACK"
+    "PRINT_STACK",
+    "ASSERT_STACK_HEIGHT"
 };
 
 static std::string lineTypeToString(LineType type){
@@ -227,6 +229,7 @@ struct VerboseParser : Parser {
         //std::cout << "##" << tokens[0] << "#" << tokens[1] << "#";
         switch (type){
             case LineType::CALL_N:
+            case LineType::ASSERT_STACK_HEIGHT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }

@@ -74,33 +74,10 @@ int main(){
         return binary_math_op([](int_type x, int_type y){ return x / y; }, 1, env, args, misc_args);
     };
     env.addFunction("div", 2, div);
-    env.interpret(new VerboseParser(&std::cin));
-	/*std::cout << "########-#-#########################\n";
-	Int* integer = env.createInt(3);
-
-	Stack stack;
-	stack.pushFrame();
-	stack.push(integer);
-	stack.push(integer);
-	std::cout << stack.str();
-	stack.popFrame(true);
-	std::cout << stack.str();
-	std::cout << env.heap->str();
-	std::cout << "----------\n";
-	Scope *scope = new Scope(&env);
-	//std::cout << scope->str();
-	scope->set("abc", env.createInt(3));
-	//std::cout << scope->str_large();
-	scope->set("abc2", env.createNothing());
-	//std::cout << scope->str_large();
-	scope->set("abc", env.createInt(7));
-	std::cout << env.heap->str();
-	//std::cout << scope->str_large();
-	Scope *childScope = scope->createChild();
-	//childScope->set("abc", heap.createInt(5));
-	//heap.str();
-	//childScope->set("abc3", heap.createNothing());
-	std::cout << childScope->str_large();
-	std::cout << "#############\n";
-	std::cout << env.heap->str();*/
+    try {
+        env.interpret(new VerboseParser(&std::cin));
+    } catch (std::string msg){
+        std::cerr << msg << "\n";
+        exit(1);
+    }
 }
