@@ -12,8 +12,8 @@ struct Nothing : HeapObject {
 		return "nothing";
 	}
 
-	bool operator==(HeapObject *obj){
-		return obj->type == type;
+    bool operator==(HeapObject &obj){
+        return obj.type == type;
 	}
 };
 

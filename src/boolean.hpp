@@ -17,8 +17,8 @@ struct Boolean : HeapObject {
 		return isTrue ? "true" : "false";
 	}
 
-	bool operator==(HeapObject *obj){
-		return obj->type == type && ((Boolean*)obj)->isTrue == this->isTrue;
+    bool operator==(HeapObject &obj){
+        return obj.type == type && ((Boolean*)&obj)->isTrue == this->isTrue;
 	}
 };
 

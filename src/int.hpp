@@ -22,12 +22,12 @@ struct Int : HeapObject {
 		return stringStream.str();
 	}
 
-	bool operator==(HeapObject *obj){
-		return obj->type == type && value == ((Int*)obj)->value;
+    bool operator==(HeapObject &obj){
+        return obj.type == type && value == ((Int*)&obj)->value;
 	}
 
-	bool operator<(HeapObject *obj){
-		return obj->type == type && value < ((Int*)obj)->value;
+    bool operator<(HeapObject &obj){
+        return obj.type == type && value < ((Int*)&obj)->value;
 	}
 
 };

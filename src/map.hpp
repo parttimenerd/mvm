@@ -58,11 +58,11 @@ struct Map : HeapObject {
         return map.find(key) != map.end();
 	}
 
-	bool operator==(HeapObject*){
+    bool operator==(HeapObject&){
 		return false;
 	}
 
-	bool operator>(HeapObject*){
+    bool operator>(HeapObject&){
 		return false;
 	}
 };

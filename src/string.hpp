@@ -38,12 +38,12 @@ struct String : HeapObject {
         }
     }
 
-	bool operator==(HeapObject* obj){
-		return obj->type == type && value.compare(((String*)obj)->value) == 0;
+    bool operator==(HeapObject &obj){
+        return obj.type == type && value.compare(((String*)&obj)->value) == 0;
 	}
 
 	bool operator<(HeapObject* obj){
-		return obj->type == type && value.compare(((String*)obj)->value) < 0;
+        return obj->type == type && value.compare(((String*)&obj)->value) < 0;
 	}
 };
 

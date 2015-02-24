@@ -44,11 +44,11 @@ struct Array : HeapObject {
         value.push_back(obj);
 	}
 
-	bool operator==(HeapObject*){
+    bool operator==(HeapObject&){
 		return false;
 	}
 
-	bool operator>(HeapObject*){
+    bool operator>(HeapObject&){
 		return false;
 	}
 };

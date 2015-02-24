@@ -74,6 +74,21 @@ int main(){
         return binary_math_op([](int_type x, int_type y){ return x / y; }, 1, env, args, misc_args);
     };
     env.addFunction("div", 2, div);
+    auto equal = [](Env* env, std::vector<HeapObject*> args, std::vector<HeapObject*> misc_args){
+        bool res = true;
+        std::vector<HeapObject*> vec(args.begin(), args.end());
+        vec.insert(vec.end(), misc_args.begin(), misc_args.end());
+        HeapObject *first = vec[0];
+        for (auto *elem : vec){
+            res = res && (*first) == (*elem);
+            if (!res){
+                break;
+            }
+        }
+        return env->createBoolean(res);
+    };
+    env.addFunction("equal", 2, equal);
+
     try {
         env.interpret(new VerboseParser(&std::cin));
     } catch (std::string msg){

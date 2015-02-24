@@ -56,11 +56,11 @@ struct HeapObject {
 		return 0;
 	}
 
-	virtual bool operator==(HeapObject *obj){
-		return obj->id == id;
+    virtual bool operator==(HeapObject &obj){
+        return obj.id == id;
 	}
 
-	virtual bool operator<(HeapObject*){
+    virtual bool operator<(HeapObject&){
         return false;
 	}
 
