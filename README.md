@@ -6,6 +6,26 @@ How to run the hello world program: run `./mvm < examples/hello_world.mvm`.
 
 How to run the test suite: run `./test.sh` (it requires ruby and colordiff to be installed)
 
+Verbose Bytecode
+=================
+The vm should eventually support byte code of the format `[Command code byte][data]\n`. But for simplicity reasons it, most of the time a more textual representation of the code is used. It's called "verbose bytecode". Each statement of this code adheres the format `[Command name] [Textual representation of it's argument (if it needs one), eg. "12" for the number 12]\n`.
+
+
+The statements are described in the following, firstly in a short table to give an overview an secondly more detailed (to clarify some pitfalls).
+
+
+command      | argument
+-----------------------------------------
+PUSH_NOTHING | – | Pushes a nothing on the stack
+PUSH_BOOLEAN | `true` or `false` | Pushes a boolean on the stack
+PUSH_ARRAY   | – | Pushes an empty array on the stack
+PUSH_MAP     | – | Pushes an empty map on the stack
+PUSH_INT     | string representation of an integer | Pushes an integer on the stack 
+PUSH_STRING  | string, line breaks an backslashes escaped | Pushes a string on the stack
+PUSH_VAR     | variable name | Pushes a variable on the stack (or a nothing if the variable doesn't exists)`
+
+
+
 MVM
 =================
 My first little Virtual Machine written in C++ (or in Java if it fails).

@@ -8,6 +8,7 @@
 enum class LineType : uint8_t {
     CALL,
     CALL_N,
+    CALL_N2,
     PUSH_NOTHING,
     PUSH_BOOLEAN,
     PUSH_INT,
@@ -22,12 +23,15 @@ enum class LineType : uint8_t {
     DUP,
     JUMP_IF,
     RETURN,
-    ERROR
+    ERROR,
+    COMMENT,
+    PRINT_STACK
 };
 
 static std::vector<std::string> type_names = {
     "CALL",
     "CALL_N",
+    "CALL_N2",
     "PUSH_NOTHING",
     "PUSH_BOOLEAN",
     "PUSH_INT",
@@ -42,7 +46,9 @@ static std::vector<std::string> type_names = {
     "DUP",
     "JUMP_IF",
     "RETURN",
-    "ERROR"
+    "ERROR",
+    "COMMENT",
+    "PRINT_STACK"
 };
 
 static std::string lineTypeToString(LineType type){
@@ -91,6 +97,8 @@ struct Line {
     std::string typeString(){
         return lineTypeToString(type);
     }
+
+    virtual ~Line() = default;
 };
 
 /**
@@ -119,7 +127,7 @@ struct Parser {
     std::istream *stream;
     std::string context;
     std::string current_line;
-    size_t line = 0;
+    size_t line_number = 0;
     bool ended = false;
 
     Parser(std::istream *stream, std::string context = "") {
@@ -130,12 +138,12 @@ struct Parser {
 
     void error(std::string msg, std::string msg1 = ""){
         std::ostringstream stream;
-        stream << "Error in line " << line << ": " << msg << msg1;
+        stream << "Error in line " << line_number << ": " << msg << msg1;
         std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 
-    std::vector<Line*> lines(){
+    virtual std::vector<Line*> lines(){
         std::vector<Line*> vec;
         while (!ended){
             Line *line = nextCodeLine();
@@ -143,6 +151,7 @@ struct Parser {
                 vec.push_back(line);
             }
         }
+
         return vec;
     }
 
@@ -155,7 +164,33 @@ struct Parser {
  */
 struct VerboseParser : Parser {
 
+    std::unordered_map<std::string, size_t> labels;
+
     VerboseParser(std::istream *stream, std::string context = "") : Parser(stream, context) {}
+
+    std::vector<Line*> lines(){
+        std::vector<Line*> vec;
+        while (!ended){
+            Line *line = nextCodeLine();
+            if (line != 0){
+                vec.push_back(line);
+            }
+        }
+        replaceLabels(&vec);
+        return vec;
+    }
+
+    void replaceLabels(std::vector<Line*> *vec){
+        for (size_t i = 0; i < vec->size(); i++){
+            Line *elem = (*vec)[i];
+            if (elem->type == LineType::JUMP_IF){
+                ArgumentedLine<std::string>* line = (ArgumentedLine<std::string>*)elem;
+                size_t target = getLabel(line->argument);
+                delete line;
+                (*vec)[i] = new ArgumentedLine<size_t>(LineType::JUMP_IF, target);
+            }
+        }
+    }
 
     std::string line(){
         return current_line;
@@ -164,7 +199,10 @@ struct VerboseParser : Parser {
     std::string nextLine(){
         std::getline(*stream, current_line);
         ended = !stream->good() || current_line == "eof";
-        if (current_line.size() > 0 && current_line[0] == '#'){ //skip comments
+        if (!ended){
+            line_number++;
+        }
+        if (current_line.size() == 0 && !ended){
             return nextLine();
         }
         return current_line;
@@ -175,10 +213,18 @@ struct VerboseParser : Parser {
         if (ended){
             return 0;
         }
+
         std::vector<std::string> tokens = tokenize(line());
+        if (tokens[0][0] == '#'){
+            return new Line(LineType::COMMENT);
+        }
+        if (isLabeled(line())){
+            storeLabel(tokens[0]);
+            tokens = tokenize(tokens[1]);
+        }
+        //std::cout << tokens[1] << "\n";
         LineType type = stringToLineType(tokens[0]);
         //std::cout << "##" << tokens[0] << "#" << tokens[1] << "#";
-
         switch (type){
             case LineType::CALL_N:
                 if (tokens.size() != 2){
@@ -186,11 +232,15 @@ struct VerboseParser : Parser {
                 }
                 return new ArgumentedLine<size_t>(type, strToNum<size_t>(tokens[1]));
             case LineType::PUSH_INT:
-            case LineType::JUMP_IF:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
                 return new ArgumentedLine<int_type>(type, strToNum<int_type>(tokens[1]));
+            case LineType::JUMP_IF:
+                if (tokens.size() != 2){
+                    error("Expected one argument, got more");
+                }
+                return new ArgumentedLine<std::string>(type, tokens[1]);
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
             case LineType::SET_VAR:
@@ -212,6 +262,8 @@ struct VerboseParser : Parser {
             case LineType::DUP:
             case LineType::POP:
             case LineType::CALL:
+            case LineType::CALL_N2:
+            case LineType::PRINT_STACK:
                 return new Line(type);
             case LineType::ERROR:
             default:
@@ -250,5 +302,27 @@ struct VerboseParser : Parser {
             tokens.push_back(str.substr(split_index + 1));
         }
         return tokens;
+    }
+
+    bool isLabeled(std::string line){
+        return !line.empty() && line.at(0) == ':';
+    }
+
+    size_t getLabel(std::string str){
+        //std::cout << "get label " << str << "\n";
+        if (labels.find(str) != labels.end()){
+            return labels[str];
+        }
+        error(std::string("Unknown label ") + str);
+        return 0;
+    }
+
+    void storeLabel(std::string label){
+        //std::cout << "set label " << label << "\n";
+        std::string str = std::string(label.begin() + 1, label.end());
+        if (labels.find(str) != labels.end()){
+            error("Redefine label", str);
+        }
+        labels[str] = line_number - 1;
     }
 };

@@ -73,6 +73,9 @@ struct HeapObject {
 	}
 
 	HeapObject* transfer(){
+        if (reference_count == 0){
+            throw std::string("Ref count of ") + escapedStr() + std::string(" is 0, can't reduce it");
+        }
         reference_count--;
         return this;
 	}

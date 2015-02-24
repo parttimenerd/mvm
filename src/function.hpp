@@ -18,7 +18,7 @@ struct Function : HeapObject {
 
     void exec(std::vector<HeapObject*> arguments){
         if (parameter_count > arguments.size()){
-            throw "not enough arguments";
+            throw std::string("not enough arguments");
         } else {
             std::vector<HeapObject*> args(arguments.begin(), arguments.begin() + parameter_count);
             std::vector<HeapObject*> misc_args(arguments.begin() + parameter_count, arguments.end());

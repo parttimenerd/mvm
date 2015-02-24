@@ -1,0 +1,11 @@
+# Prints ascending numbers from 1 to infinity in an endless loop 
+PUSH_INT 0
+:start PUSH_INT 1
+PUSH_VAR add
+CALL
+DUP
+PUSH_VAR println
+CALL_N 1
+POP
+PUSH_BOOLEAN true
+JUMP_IF start

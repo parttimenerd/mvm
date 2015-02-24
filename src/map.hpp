@@ -38,7 +38,7 @@ struct Map : HeapObject {
             if (key->type == Type::STRING || key->type == Type::INT){
                 content_type = key->type;
             } else {
-                throw "Key has wrong type";
+                throw std::string("Key has wrong type");
             }
         }
         if (key->type == content_type){

@@ -23,6 +23,7 @@ struct Interpreter {
     }
 
     void interpret(Line* line){
+        try {
         switch (line->type){
             case LineType::PUSH_STRING:
                 env->stack->push(env->createString(toArgLine<std::string>(line)->argument)->transfer());
@@ -34,13 +35,17 @@ struct Interpreter {
                 env->stack->push(env->createBoolean(toArgLine<bool>(line)->argument)->transfer());
                 break;
             case LineType::PUSH_INT:
-                env->stack->push(env->createInt(toArgLine<int_type>(line)->argument)->transfer());
+                {
+                    int_type value = toArgLine<int_type>(line)->argument;
+                    env->stack->push(env->createInt(value)->transfer());
+                }
                 break;
             case LineType::PUSH_ARRAY:
                 env->stack->push(env->createArray()->transfer());
                 break;
             case LineType::PUSH_MAP:
                 env->stack->push(env->createMap()->transfer());
+                break;
             case LineType::PUSH_VAR:
                 env->stack->push(scope->get(toArgLine<std::string>(line)->argument)->transfer());
                 break;
@@ -53,7 +58,7 @@ struct Interpreter {
                     if (obj->type == Type::STRING){
                         scope->set(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
                     } else {
-                        throw std::string("Expected string on stack for SET_VAR2 command");
+                        error("Expected string on stack for SET_VAR2 command");
                     }
                     obj->dereference();
                 }
@@ -61,14 +66,19 @@ struct Interpreter {
             case LineType::CALL_N:
                 call(toArgLine<size_t>(line)->argument);
                 break;
-            case LineType::CALL:
+            case LineType::CALL_N2:
                 call();
+                break;
+            case LineType::CALL:
+                callDefault();
                 break;
             case LineType::JUMP_IF:
                 {
                     HeapObject *obj = env->stack->pop();
                     if (obj->type == Type::BOOLEAN && static_cast<Boolean*>(obj)->isTrue){
-                        currentPos += toArgLine<int_type>(line)->argument;
+                        //std::cout << currentPos << "\n";
+                        currentPos = toArgLine<size_t>(line)->argument - 1;
+                        //std::cout << currentPos << "\n";
                     }
                     obj->dereference();
                 }
@@ -79,9 +89,20 @@ struct Interpreter {
             case LineType::DUP:
                 env->stack->dup();
                 break;
+            case LineType::PRINT_STACK:
+                std::cout << env->stack->str();
+                break;
+            case LineType::COMMENT:
+                break;
             default:
                 throw std::string("Unsupported command ") + line->typeString();
         }
+        } catch (std::string msg){
+            error(std::string(msg));
+            exit(1);
+        }
+
+
         //std::cout << env->stack->str() << "+++#############" << line->str() << "\n";
         //std::cout << scope->str_large() << "\n";
         //std::cout << env->stack->str();
@@ -92,7 +113,22 @@ struct Interpreter {
         return static_cast<ArgumentedLine<T>*>(line);
     }
 
+    /**
+     * @brief call with default number of arguments
+     */
+    void callDefault(){
+        HeapObject *obj = env->stack->pop();
+        Function *func = static_cast<Function*>(obj);
+        std::vector<HeapObject*> args;
+        while (args.size() < func->parameter_count){
+            HeapObject *argObj = env->stack->pop();
+            args.push_back(argObj);
+        }
+        func->exec(args);
+    }
+
     void call(size_t numberOfArguments = 99999999999){
+        //std::cerr << currentPos << "aa\n";
         if (numberOfArguments == 99999999999){
             HeapObject* num = env->stack->pop();
             if (num->type == Type::INT){
@@ -107,7 +143,10 @@ struct Interpreter {
         } else {
             std::vector<HeapObject*> args;
             while (args.size() < numberOfArguments){
-                args.push_back(env->stack->pop()->transfer());
+                HeapObject *argObj = env->stack->pop();
+                //std::cerr << "######\n" << env->stack->str() ;
+                //std::cerr << "a   " << argObj->reference_count << "\n";
+                args.push_back(argObj);
                 //std::cout << "ARG " << args[args.size() - 1]->str() << "\n";
             }
             Function *func = static_cast<Function*>(obj);
@@ -118,5 +157,12 @@ struct Interpreter {
 
     Line* currentLine(){
         return code.at(currentPos);
+    }
+
+    void error(std::string msg, std::string msg1 = ""){
+        std::ostringstream stream;
+        stream << "Error in line " << currentPos << ": " << msg << msg1;
+        std::cerr << stream.str() << "\n";
+        throw stream.str();
     }
 };
