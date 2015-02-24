@@ -6,12 +6,14 @@
 struct Interpreter {
     Env *env;
     Scope *scope;
+    Scope *baseScope;
     std::vector<Line*> code;
     size_t currentPos = 0;
 
     Interpreter(Env *env, Scope *currentScope, std::vector<Line*> code){
         this->env = env;
         this->scope = currentScope;
+        this->baseScope = currentScope;
         this->code = code;
     }
 
@@ -24,6 +26,7 @@ struct Interpreter {
 
     void interpret(Line* line){
         try {
+            //std::cout << currentPos << " " << baseScope->get("abc")->str() << "\n";
         switch (line->type){
             case LineType::PUSH_STRING:
                 env->stack->push(env->createString(toArgLine<std::string>(line)->argument)->transfer());
@@ -47,10 +50,24 @@ struct Interpreter {
                 env->stack->push(env->createMap()->transfer());
                 break;
             case LineType::PUSH_VAR:
-                env->stack->push(scope->get(toArgLine<std::string>(line)->argument)->transfer());
+                env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
+                break;
+            case LineType::SET_VAR_HERE:
+                scope->setHere(toArgLine<std::string>(line)->argument, env->stack->pop());
+                break;
+            case LineType::SET_VAR_HERE2:
+                {
+                    auto *obj = env->stack->pop();
+                    if (obj->type == Type::STRING){
+                        scope->setHere(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
+                    } else {
+                        error("Expected string on stack for SET_VAR2 command");
+                    }
+                    obj->dereference();
+                }
                 break;
             case LineType::SET_VAR:
-                scope->set(toArgLine<std::string>(line)->argument, env->stack->pop()->transfer());
+                scope->set(toArgLine<std::string>(line)->argument, env->stack->pop());
                 break;
             case LineType::SET_VAR2:
                 {
@@ -89,20 +106,26 @@ struct Interpreter {
             case LineType::DUP:
                 env->stack->dup();
                 break;
+            case LineType::PUSH_SCOPE:
+                pushScope();
+                break;
+            case LineType::POP_SCOPE:
+                popScope();
+                break;
             case LineType::PRINT_STACK:
                 std::cout << env->stack->str();
                 break;
             case LineType::ASSERT_STACK_HEIGHT:
-            {
-                size_t expectedHeight = toArgLine<size_t>(line)->argument;
-                if (env->stack->size() != expectedHeight){
-                    std::ostringstream stream;
-                    stream << "Expected stack of height " << expectedHeight
-                        << " not " << env->stack->size();
-                    throw stream.str();
+                {
+                    size_t expectedHeight = toArgLine<size_t>(line)->argument;
+                    if (env->stack->size() != expectedHeight){
+                        std::ostringstream stream;
+                        stream << "Expected stack of height " << expectedHeight
+                            << " not " << env->stack->size();
+                        throw stream.str();
+                    }
                 }
                 break;
-            }
             case LineType::COMMENT:
                 break;
             default:
@@ -163,6 +186,21 @@ struct Interpreter {
             Function *func = static_cast<Function*>(obj);
             //std::cout << func->str();
             func->exec(args);
+        }
+    }
+
+    void pushScope(){
+        scope = scope->createChild();
+    }
+
+    void popScope(){
+        if (scope != baseScope){
+            auto *parent = scope->parent;
+            parent->reference();
+            scope->dereference();
+            scope = parent;
+        } else {
+            throw std::string("Cannot pop base scope");
         }
     }
 

@@ -19,9 +19,13 @@ enum class LineType : uint8_t {
     PUSH_VAR2,
     SET_VAR,
     SET_VAR2,
+    SET_VAR_HERE,
+    SET_VAR_HERE2,
     POP,
     DUP,
     JUMP_IF,
+    PUSH_SCOPE,
+    POP_SCOPE,
     RETURN,
     ERROR,
     COMMENT,
@@ -43,9 +47,13 @@ static std::vector<std::string> type_names = {
     "PUSH_VAR2",
     "SET_VAR",
     "SET_VAR2",
+    "SET_VAR_HERE",
+    "SET_VAR_HERE2",
     "POP",
     "DUP",
     "JUMP_IF",
+    "PUSH_SCOPE",
+    "POP_SCOPE",
     "RETURN",
     "ERROR",
     "COMMENT",
@@ -246,6 +254,7 @@ struct VerboseParser : Parser {
                 return new ArgumentedLine<std::string>(type, tokens[1]);
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
+            case LineType::SET_VAR_HERE:
             case LineType::SET_VAR:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
@@ -262,10 +271,13 @@ struct VerboseParser : Parser {
             case LineType::RETURN:
             case LineType::PUSH_VAR2:
             case LineType::SET_VAR2:
+            case LineType::SET_VAR_HERE2:
             case LineType::DUP:
             case LineType::POP:
             case LineType::CALL:
             case LineType::CALL_N2:
+            case LineType::PUSH_SCOPE:
+            case LineType::POP_SCOPE:
             case LineType::PRINT_STACK:
                 return new Line(type);
             case LineType::ERROR:
