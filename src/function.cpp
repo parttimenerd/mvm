@@ -16,18 +16,17 @@ CodeFunction::CodeFunction(Env *env, Scope *parent_scope,
     this->lines = lines;
 }
 
-Scope* CodeFunction::initFunctionScope(std::vector<HeapObject*> arguments,
-    std::vector<HeapObject*> miscArguments){
+Scope* CodeFunction::initFunctionScope(FunctionArguments args){
     Scope *scope = parent_scope->createChild();
     for (size_t i = 0; i < parameters.size(); i++){
-        scope->setHere(parameters.at(i), arguments.at(i));
+        scope->setHere(parameters.at(i), args.arguments.at(i));
     }
-    scope->setHere(std::string{"arguments"}, env->createArray(miscArguments, true));
+    scope->setHere(std::string{"arguments"}, env->createArray(args.misc_arguments, true));
     return scope;
 }
 
-void CodeFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
-    Scope *functionBaseScope = initFunctionScope(arguments, miscArguments);
+void CodeFunction::exec(FunctionArguments args){
+    Scope *functionBaseScope = initFunctionScope(args);
     env->stack->pushFrame();
 
     // execute the code lines and wrap it with a try catch
@@ -45,13 +44,10 @@ void CodeFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObje
 
 }
 
-void CPPFunction::exec(std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments){
-    auto ret_val = this->impl_func(env, arguments, miscArguments);
-    env->stack->push(ret_val);
-    for (auto *arg : arguments){
-        arg->dereference();
-    }
-    for (auto *arg : miscArguments){
-        arg->dereference();
-    }
+void CPPFunction::exec(FunctionArguments args){
+   auto ret_val = this->impl_func(env, args);
+   env->stack->push(ret_val);
+   for (auto &arg : args.all_arguments){
+       arg->dereference();
+   }
 }

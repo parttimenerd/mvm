@@ -78,7 +78,7 @@ CodeFunction* Env::createFunction(Scope *parent_scope, std::vector<std::string> 
     return func;
 }
 
-void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments)> implFunc){
+void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env*, FunctionArguments)> implFunc){
     auto *obj = new CPPFunction(this, parameter_count, implFunc);
     obj->name = name;
     root_scope->set(name, obj);

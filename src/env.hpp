@@ -17,6 +17,7 @@ struct Function;
 struct String;
 struct Line;
 struct Parser;
+struct FunctionArguments;
 
 struct Env {
     Heap *heap;
@@ -55,6 +56,6 @@ struct Env {
      * Add the passed function to the root scope.
      */
     void addFunction(std::string name, size_t parameter_count,
-        std::function<HeapObject*(Env *env, std::vector<HeapObject*> arguments, std::vector<HeapObject*> miscArguments)> implFunc);
+        std::function<HeapObject*(Env*, FunctionArguments)> implFunc);
 
 };
