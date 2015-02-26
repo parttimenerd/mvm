@@ -30,10 +30,15 @@ enum TokenType {
     COMMA,
     COLON,
     PLUS,
+    LEFT_DOUBLE_PLUS,
+    RIGHT_DOUBLE_PLUS,
     MINUS,
+    LEFT_DOUBLE_MINUS,
+    RIGHT_DOUBLE_MINUS,
     DIVIDE_SIGN,
     MULTIPLY_SIGN,
     MOD_SIGN,
+    NEGATE,
     END,
     LINE_BREAK /** Line break or semi colon */
 };
@@ -61,6 +66,11 @@ std::string lineTypeToString(TokenType type){
         case PLUS: return "+";
         case MINUS: return "-";
         case STRING: return "STRING";
+        case LEFT_DOUBLE_MINUS: return "--b";
+        case LEFT_DOUBLE_PLUS: return "++b";
+        case RIGHT_DOUBLE_MINUS: return "b--";
+        case RIGHT_DOUBLE_PLUS: return "b++";
+        case NEGATE: return "NEGATE";
     }
     return "[unknown token]";
 }
@@ -107,6 +117,7 @@ struct Lexer {
     size_t lineNumber = 1;
     size_t columnNumber = 0;
     Token *lastToken = 0;
+    bool wsAfterLastToken = false;
 
     Lexer(std::istream *input){
         this->input = input;
@@ -129,12 +140,14 @@ struct Lexer {
 
     Token* nextToken(){
         lastToken = _nextToken();
+        wsAfterLastToken = false;
         return lastToken;
     }
 
     Token* _nextToken(){
         while (isWhiteSpace()){          // omit whitespace
             next();
+            wsAfterLastToken = true;
         }
         if (ended()){                    // end of stream
             return token(TokenType::END);
@@ -142,7 +155,7 @@ struct Lexer {
         if (isLetter() || is('_') || is('$')){
             return parseID();
         }
-        if (isDigit() || is('-')){
+        if (isDigit() || isSign()){
             return parseNumericAndSign();
         }
         switch(currentChar){
@@ -188,9 +201,6 @@ struct Lexer {
             case '*':
                 next();
                 return token(MULTIPLY_SIGN);
-            case '+':
-                next();
-                return token(PLUS);
             case '%':
                 next();
                 return token(MOD_SIGN);
@@ -240,21 +250,56 @@ struct Lexer {
         return token(STRING, str);
     }
 
+    bool lastTokenWasExpression(){
+        auto t = lastToken->type;
+        return t == ID || t == RIGHT_BRACE || t == RIGHT_ANGLE_BRACKET ||
+               t == INT || t == FLOAT || t == STRING;
+    }
+
+    bool isFirstToken(){
+        return lastToken == 0;
+    }
+
     Token* parseNumericAndSign(){
         bool minus = false;
         if (is('-')){
-            auto t = lastToken->type;
-            if (t == ID || t == RIGHT_BRACE || t == RIGHT_ANGLE_BRACKET ||
-                    t == INT || t == FLOAT || t == STRING){
+            if (!isFirstToken() && lastTokenWasExpression()){ //e.g. a - b
                 next();
-                return token(MINUS); // the '-' seems to be a 'real' subtraction sign
+                if (is('-') && !wsAfterLastToken){ //e.g. a-- b
+                    next();
+                    return token(RIGHT_DOUBLE_MINUS);
+                } else {
+                    return token(MINUS); // the '-' seems to be a 'real' subtraction sign
+                }
             } else {
                 next();
+                if (is('-')){ //e.g. a, -- b
+                    next();
+                    return token(LEFT_DOUBLE_MINUS);
+                }
                 minus = true;
+            }
+        } else if (is('+')){
+            if (!isFirstToken() && lastTokenWasExpression()){ //e.g. a + b
+                next();
+                if (is('+') && !wsAfterLastToken){ //e.g. a ++ b
+                    next();
+                    return token(RIGHT_DOUBLE_PLUS);
+                } else {
+                    return token(PLUS);
+                }
+            } else { //e.g. a, +b
+                next();
+                if (is('+')){ //e.g. a, ++b
+                    next();
+                    return token(LEFT_DOUBLE_PLUS);
+                } else {
+                    return token(PLUS);
+                }
             }
         }
         if (!isDigit()){
-            error("Don't know what to do with char", currentChar);
+            return token(NEGATE);
         }
         int_type res = 0;
         while (isDigit()){
@@ -354,7 +399,10 @@ struct Lexer {
 
     void error(std::string msg, char msg1){
         std::ostringstream stream;
-        stream << msg1 << " (" << (unsigned int)msg1 << ")";
+        char arr[2];
+        arr[0] = msg1;
+        arr[1] = '\0';
+        stream << std::string(arr) << " (" << (unsigned int)msg1 << ")";
         error(msg, stream.str());
     }
 
