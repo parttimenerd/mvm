@@ -16,12 +16,18 @@
 #include "env.hpp"
 #include "parser.hpp"
 #include "stdlib.hpp"
+#include "lexer.hpp"
 
 
 // TODO add other line types
 
+void lex();
 
-int main(){
+int main(int argc, char *argv[]){
+    if (argc == 2 && std::string(argv[1]) == "lex"){
+        lex();
+        exit(0);
+    }
 	Env env;
     loadStdLib(env);
     try {
@@ -30,4 +36,12 @@ int main(){
         std::cerr << msg << "\n";
         exit(1);
     }
+}
+
+void lex(){
+    Lexer lexer(&std::cin);
+    while (!lexer.ended()){
+        std::cout << lexer.nextToken()->str() << "\n";
+    }
+    std::cout << lexer.nextToken()->str() << "\n";
 }

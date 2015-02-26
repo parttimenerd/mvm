@@ -211,7 +211,7 @@ struct Interpreter {
     void error(std::string msg, std::string msg1 = ""){
         std::ostringstream stream;
         stream << "Error in line " << currentPos << ": " << msg << msg1;
-        //std::cerr << stream.str() << "\n";
+        std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 };

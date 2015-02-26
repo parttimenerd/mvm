@@ -9,3 +9,4 @@ cmake_install.cmake
 .creator
 .files
 .includes
+abc.*
