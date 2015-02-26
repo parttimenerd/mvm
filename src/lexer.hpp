@@ -292,7 +292,11 @@ struct Lexer {
                 next();
                 if (is('+')){ //e.g. a, ++b
                     next();
-                    return token(LEFT_DOUBLE_PLUS);
+                    if (!isWhiteSpace()){
+                        return token(LEFT_DOUBLE_PLUS);
+                    } else {
+                        error("Didn't expect whitespace here, expected start of expression");
+                    }
                 } else {
                     return token(PLUS);
                 }
