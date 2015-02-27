@@ -48,6 +48,8 @@ enum TokenType {
     END,
     BOOLEAN,
     NOTHING,
+    VAR,
+    FUNCTION,
     LINE_BREAK /** Line break or semi colon */
 };
 
@@ -85,6 +87,8 @@ std::string lineTypeToString(TokenType type){
         case OR: return "||";
         case BOOLEAN: return "BOOLEAN";
         case NOTHING: return "nothing";
+        case VAR: return "var";
+        case FUNCTION: return "function";
     }
     return "[unknown token]";
 }
@@ -153,6 +157,9 @@ struct Lexer {
     }
 
     Token* nextToken(){
+        if (lastToken != 0){
+            delete lastToken;
+        }
         lastToken = _nextToken();
         wsAfterLastToken = false;
         return lastToken;
@@ -166,7 +173,7 @@ struct Lexer {
         if (ended()){                    // end of stream
             return token(TokenType::END);
         }
-        if (isLetter() || is('_') || is('$')){
+        if (isLetter() || is('_') || is('$') || is('@')){
             return parseID();
         }
         if (isDigit() || isSign()){
@@ -256,7 +263,7 @@ struct Lexer {
         std::ostringstream stream;
         stream << currentChar;
         next();
-        while (isAlphaNumeric() || is('_') || is('$') || is('?')){
+        while (isAlphaNumeric() || is('_') || is('$') || is('?') || is('@')){
             stream << currentChar;
             next();
         }
@@ -267,6 +274,10 @@ struct Lexer {
             return token(BOOLEAN, true);
         } else if (str == std::string("false")){
             return token(BOOLEAN, false);
+        } else if (str == std::string("function")){
+            return token(FUNCTION);
+        } else if (str == std::string("var")){
+            return token(VAR);
         }
         return token(ID, stream.str());
     }
