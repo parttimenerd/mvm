@@ -93,13 +93,27 @@ std::string lineTypeToString(TokenType type){
     return "[unknown token]";
 }
 
-struct Token {
-    TokenType type;
+struct Context {
     size_t lineNumber;
 
-    Token(TokenType type, size_t lineNumber){
-        this->type = type;
+    Context(size_t lineNumber){
         this->lineNumber = lineNumber;
+    }
+
+    std::string str(){
+        std::ostringstream stream;
+        stream << lineNumber;
+        return stream.str();
+    }
+};
+
+struct Token {
+    TokenType type;
+    Context context;
+
+    Token(TokenType type, Context context) : context(context){
+        this->type = type;
+        //this->context = context;
     }
 
     virtual std::string str(){
@@ -113,7 +127,7 @@ template<typename T>
 struct ArgumentedToken : Token {
     T argument;
 
-    ArgumentedToken(TokenType type, size_t lineNumber, T argument) : Token(type, lineNumber){
+    ArgumentedToken(TokenType type, Context context, T argument) : Token(type, context){
         this->argument = argument;
     }
     std::string str(){
@@ -442,8 +456,8 @@ struct Lexer {
         return currentChar == 0;
     }
 
-    size_t context(){
-        return lineNumber;
+    Context context(){
+        return Context(lineNumber);
     }
 
     template<typename T>
@@ -466,7 +480,7 @@ struct Lexer {
 
     void error(std::string msg, std::string msg1 = ""){
         std::ostringstream stream;
-        stream << "Error in line " << lineNumber
+        stream << "Error in line " << context().str()
                << ", column " << columnNumber << ": " << msg << msg1;
         std::cerr << stream.str() << "\n";
         throw stream.str();
