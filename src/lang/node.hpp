@@ -39,7 +39,7 @@ struct ArithmeticNode : InnerNode {
     using InnerNode::InnerNode;
 
     void compile(Target &target){
-        for (int i = children.size() - 1; i >= 0; i--){
+        for (size_t i = 0; i < children.size(); i++){
             children[i]->compile(target);
         }
         target.CALL_N(std::string(functionName), children.size());

@@ -183,6 +183,7 @@ struct Interpreter {
                 args.push_back(argObj);
                 //std::cout << "ARG " << args[args.size() - 1]->str() << "\n";
             }
+            std::reverse(args.begin(), args.end());
             Function *func = static_cast<Function*>(obj);
             //std::cout << func->str();
             func->exec(args);
