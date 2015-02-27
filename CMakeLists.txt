@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 project(mvm)
 
 
-## Configure compiler and libraries : Boost
-add_compile_options(-std=c++1y -Wall -Wextra)
+## Configure compiler and libraries
+add_compile_options(-std=c++1y -Wall -Wextra -Wno-switch-enum)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

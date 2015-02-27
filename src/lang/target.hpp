@@ -43,6 +43,15 @@ struct Target {
     virtual void PUSH_VAR2(){
         std::cout << "PUSH_VAR2\n";
     }
+
+    void CALL_N(std::string functionName, size_t numberOfArguments){
+        PUSH_VAR(functionName);
+        CALL_N(numberOfArguments);
+    }
+
+    virtual void CALL_N(size_t numberOfArguments){
+        std::cout << "CALL_N " << numberOfArguments << "\n";
+    }
 };
 
 }

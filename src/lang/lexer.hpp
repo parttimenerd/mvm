@@ -53,7 +53,7 @@ enum TokenType {
     LINE_BREAK /** Line break or semi colon */
 };
 
-std::string lineTypeToString(TokenType type){
+std::string tokenTypeToString(TokenType type){
     switch (type){
         case ID: return "ID";
         case LINE_BREAK: return "LINE_BREAK";
@@ -117,7 +117,7 @@ struct Token {
     }
 
     virtual std::string str(){
-        return lineTypeToString(type);
+        return tokenTypeToString(type);
     }
 
     virtual ~Token() = default;
@@ -132,7 +132,7 @@ struct ArgumentedToken : Token {
     }
     std::string str(){
         std::ostringstream stream;
-        stream << lineTypeToString(type) << "[" << argument << "]";
+        stream << tokenTypeToString(type) << "[" << argument << "]";
         return stream.str();
     }
 };
