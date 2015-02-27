@@ -187,7 +187,7 @@ struct Interpreter {
             Function *func = static_cast<Function*>(obj);
             //std::cout << func->str();
             func->exec(args);
-            std::cout << env->stack->str();
+            //std::cout << env->stack->str();
         }
     }
 

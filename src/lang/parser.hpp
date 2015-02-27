@@ -94,11 +94,16 @@ struct Parser {
     Node* parseAtom(){
         if (is(INT)){
             return parseInt();
+        } else if (is(BOOLEAN)){
+            return parseString();
+        } else if (is(STRING)){
+            return parseBoolean();
+        } else if (is(NOTHING)){
+            return parseNothing();
         } else if (is(LEFT_BRACE)){
-            next();
-            Node* expr = parseExpression();
-            parse(RIGHT_BRACE);
-            return expr;
+            return parseBraced();
+        } else if (is(ID)){
+            return parseIDandCall();
         } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
@@ -108,15 +113,58 @@ struct Parser {
         return 0;
     }
 
-    Node* parseInt(){
-        //std::cout << "hey, I'm parserInt\n";
-        if (is(INT)){
-            Node *ret = new IntNode(getArgument<int_type>());
-            next();
-            return ret;
+    Node* parseIDandCall(){
+        std::string id = getArgument<std::string>();
+        next();
+        if (isNot(LEFT_BRACE)){
+            return new VariableNode(id);
         }
-        error("Expected INT but got ", current()->str());
-        return 0;
+        next();
+        //std::cout << "|" << current()->str() << "\n";
+        std::vector<Node*> arguments;
+        while(isNot(RIGHT_BRACE)){
+            if (arguments.size() > 0){
+                if (is(COMMA)){
+                    next();
+                }
+            }
+            //std::cout << "||" << current()->str() << "\n";
+            arguments.push_back(parseExpression());
+            //std::cout << "||>" << current()->str() << "\n";
+        }
+        //std::cout << "|||" << current()->str() << "\n";
+        return new CallNode(id, arguments);
+    }
+
+    Node* parseInt(){
+        Node *ret = new IntNode(getArgument<int_type>());
+        next();
+        return ret;
+    }
+
+    Node* parseString(){
+        Node *ret = new StringNode(getArgument<std::string>());
+        next();
+        return ret;
+    }
+
+    Node* parseBoolean(){
+        Node *ret = new BooleanNode(getArgument<bool>());
+        next();
+        return ret;
+    }
+
+    Node* parseNothing(){
+        Node *ret = new NothingNode();
+        next();
+        return ret;
+    }
+
+    Node* parseBraced(){
+        next();
+        Node* expr = parseExpression();
+        parse(RIGHT_BRACE);
+        return expr;
     }
 
     bool is(TokenType type){

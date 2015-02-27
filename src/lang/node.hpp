@@ -73,4 +73,17 @@ Node* createModNode(std::vector<Node*> &children){
     return new ArithmeticNode<modFuncName>(children);
 }
 
+struct CallNode : InnerNode {
+
+    std::string name;
+    CallNode(std::string name, std::vector<Node*> arguments) : InnerNode(arguments), name(name) {}
+
+    void compile(Target &target){
+        for (size_t i = 0; i < children.size(); i++){
+            children[i]->compile(target);
+        }
+        target.CALL_N(name, children.size());
+    }
+};
+
 }
