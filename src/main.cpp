@@ -16,7 +16,7 @@
 #include "env.hpp"
 #include "parser.hpp"
 #include "stdlib.hpp"
-#include "lexer.hpp"
+#include "lang/lexer.hpp"
 
 
 // TODO add other line types
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]){
 }
 
 void lex(){
-    Lexer lexer(&std::cin);
+    lang::Lexer lexer(&std::cin);
     while (!lexer.ended()){
         std::cout << lexer.nextToken()->str() << "\n";
     }

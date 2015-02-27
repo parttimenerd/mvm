@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils.hpp"
+#include "../utils.hpp"
 #include <cctype>
 
 /*void replaceAll(std::string& str, const std::string& from, const std::string& to) {
@@ -13,6 +13,8 @@
         start_pos += to.length();
     }
 }*/
+
+namespace lang {
 
 enum TokenType {
     ID,
@@ -39,7 +41,13 @@ enum TokenType {
     MULTIPLY_SIGN,
     MOD_SIGN,
     NEGATE,
+    NOT,
+    NOT_EQUAL,
+    AND,
+    OR,
     END,
+    BOOLEAN,
+    NOTHING,
     LINE_BREAK /** Line break or semi colon */
 };
 
@@ -71,6 +79,12 @@ std::string lineTypeToString(TokenType type){
         case RIGHT_DOUBLE_MINUS: return "b--";
         case RIGHT_DOUBLE_PLUS: return "b++";
         case NEGATE: return "NEGATE";
+        case NOT: return "!";
+        case NOT_EQUAL: return "!=";
+        case AND: return "&&";
+        case OR: return "||";
+        case BOOLEAN: return "BOOLEAN";
+        case NOTHING: return "nothing";
     }
     return "[unknown token]";
 }
@@ -207,6 +221,27 @@ struct Lexer {
             case '"':
             case '\'':
                 return parseString(currentChar);
+            case '!':
+                next();
+                if (is('=')){
+                    next();
+                    return token(NOT_EQUAL);
+                }
+                return token(NOT);
+            case '|':
+                next();
+                if (is('|')){
+                    next();
+                    return token(OR);
+                }
+                error("Don't know what to do with char ", currentChar);
+            case '&':
+                next();
+                if (is('&')){
+                    next();
+                    return token(AND);
+                }
+                error("Don't know what to do with char ", currentChar);
             default:
                 error("Don't know what to do with char ", currentChar);
         }
@@ -225,6 +260,14 @@ struct Lexer {
             stream << currentChar;
             next();
         }
+        auto str = stream.str();
+        if (str == std::string("nothing")){
+            return token(NOTHING);
+        } else if (str == std::string("true")){
+            return token(BOOLEAN, true);
+        } else if (str == std::string("false")){
+            return token(BOOLEAN, false);
+        }
         return token(ID, stream.str());
     }
 
@@ -238,9 +281,9 @@ struct Lexer {
         next();
         std::string str = stream.str();
         std::vector<std::string> replacements = {
-            "\\\t", "\t",
-            "\\\n", "\n",
-            "\\\r", "\r",
+            "\\t", "\t",
+            "\\n", "\n",
+            "\\r", "\r",
             "\\'", "'",
             "\\\"", "\""
         };
@@ -419,3 +462,5 @@ struct Lexer {
     }
 
 };
+
+}
