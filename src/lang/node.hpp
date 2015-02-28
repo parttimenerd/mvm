@@ -13,7 +13,8 @@ enum NodeType {
     BINARY,
     BINARY_C,
     INFIX,
-    LEAF
+    LEAF,
+    BINARY_L
 };
 
 
@@ -178,6 +179,46 @@ struct ModNode : BinaryOperator {
 
     TokenType op(){
         return MOD_SIGN;
+    }
+};
+
+struct AndNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        size_t endLabel = target.inventLabel();
+        for (size_t i = 0; i < children.size() - 1; i++){
+            left->compile(target);
+            target.DUP();
+            target.JUMP_IF_NOT(endLabel);
+        }
+        right->compile(target);
+        target.placeLabel(endLabel);
+    }
+
+    TokenType op(){
+        return AND;
+    }
+};
+
+struct OrNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        size_t endLabel = target.inventLabel();
+        for (size_t i = 0; i < children.size() - 1; i++){
+            left->compile(target);
+            target.DUP();
+            target.JUMP_IF(endLabel);
+        }
+        right->compile(target);
+        target.placeLabel(endLabel);
+    }
+
+    TokenType op(){
+        return OR;
     }
 };
 

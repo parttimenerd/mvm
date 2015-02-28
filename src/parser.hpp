@@ -24,11 +24,14 @@ enum class LineType : uint8_t {
     POP,
     DUP,
     JUMP_IF,
+    JUMP_IF_NOT,
+    JUMP,
     PUSH_SCOPE,
     POP_SCOPE,
     RETURN,
     ERROR,
     COMMENT,
+    NOP,
     PRINT_STACK,
     ASSERT_STACK_HEIGHT
 };
@@ -52,11 +55,14 @@ static std::vector<std::string> type_names = {
     "POP",
     "DUP",
     "JUMP_IF",
+    "JUMP_IF_NOT",
+    "JUMP",
     "PUSH_SCOPE",
     "POP_SCOPE",
     "RETURN",
     "ERROR",
     "COMMENT",
+    "NOP",
     "PRINT_STACK",
     "ASSERT_STACK_HEIGHT"
 };
@@ -193,11 +199,12 @@ struct VerboseParser : Parser {
     void replaceLabels(std::vector<Line*> *vec){
         for (size_t i = 0; i < vec->size(); i++){
             Line *elem = (*vec)[i];
-            if (elem->type == LineType::JUMP_IF){
+            if (elem->type == LineType::JUMP_IF || elem->type == LineType::JUMP_IF_NOT
+                    || elem->type == LineType::JUMP){
                 ArgumentedLine<std::string>* line = (ArgumentedLine<std::string>*)elem;
                 size_t target = getLabel(line->argument);
                 delete line;
-                (*vec)[i] = new ArgumentedLine<size_t>(LineType::JUMP_IF, target);
+                (*vec)[i] = new ArgumentedLine<size_t>(elem->type, target);
             }
         }
     }
@@ -247,7 +254,9 @@ struct VerboseParser : Parser {
                     error("Expected one argument, got more");
                 }
                 return new ArgumentedLine<int_type>(type, strToNum<int_type>(tokens[1]));
+            case LineType::JUMP:
             case LineType::JUMP_IF:
+            case LineType::JUMP_IF_NOT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -278,6 +287,7 @@ struct VerboseParser : Parser {
             case LineType::CALL_N2:
             case LineType::PUSH_SCOPE:
             case LineType::POP_SCOPE:
+            case LineType::NOP:
             case LineType::PRINT_STACK:
                 return new Line(type);
             case LineType::ERROR:

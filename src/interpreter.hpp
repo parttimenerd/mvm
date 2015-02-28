@@ -89,10 +89,13 @@ struct Interpreter {
             case LineType::CALL:
                 callDefault();
                 break;
-            case LineType::JUMP_IF:
+            case LineType::JUMP:
+                currentPos = toArgLine<size_t>(line)->argument - 1;
+                break;
+             case LineType::JUMP_IF:
                 {
                     HeapObject *obj = env->stack->pop();
-                    if (obj->type == Type::BOOLEAN && static_cast<Boolean*>(obj)->isTrue){
+                    if (obj->toBool()){
                         //std::cout << currentPos << "\n";
                         currentPos = toArgLine<size_t>(line)->argument - 1;
                         //std::cout << currentPos << "\n";
@@ -100,6 +103,17 @@ struct Interpreter {
                     obj->dereference();
                 }
                 break;
+            case LineType::JUMP_IF_NOT:
+               {
+                   HeapObject *obj = env->stack->pop();
+                   if (!obj->toBool()){
+                       //std::cout << currentPos << "\n";
+                       currentPos = toArgLine<size_t>(line)->argument - 1;
+                       //std::cout << currentPos << "\n";
+                   }
+                   obj->dereference();
+               }
+               break;
             case LineType::POP:
                 env->stack->popAndDeref();
                 break;
@@ -127,6 +141,7 @@ struct Interpreter {
                 }
                 break;
             case LineType::COMMENT:
+            case LineType::NOP:
                 break;
             default:
                 throw std::string("Unsupported command ") + line->typeString();

@@ -64,6 +64,10 @@ struct HeapObject {
         return false;
 	}
 
+    virtual bool toBool(){
+        return true;
+    }
+
 	void reference(){
         reference_count++;
 	}

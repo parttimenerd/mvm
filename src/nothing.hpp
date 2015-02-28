@@ -15,6 +15,10 @@ struct Nothing : HeapObject {
     bool operator==(HeapObject &obj){
         return obj.type == type;
 	}
+
+    bool toBool(){
+        return false;
+    }
 };
 
 #endif

@@ -30,6 +30,10 @@ struct Int : HeapObject {
         return obj.type == type && value < ((Int*)&obj)->value;
 	}
 
+    bool toBool(){
+        return value != 0;
+    }
+
 };
 
 #endif

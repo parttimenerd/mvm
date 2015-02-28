@@ -20,6 +20,10 @@ struct Boolean : HeapObject {
     bool operator==(HeapObject &obj){
         return obj.type == type && ((Boolean*)&obj)->isTrue == this->isTrue;
 	}
+
+    bool toBool(){
+        return isTrue;
+    }
 };
 
 #endif

@@ -63,6 +63,41 @@ struct Target {
     virtual void CALL_N(size_t numberOfArguments){
         std::cout << "CALL_N " << numberOfArguments << "\n";
     }
+
+    virtual size_t makeLabel(){
+        size_t label = inventLabel();
+        placeLabel(label);
+        return label;
+    }
+
+    virtual size_t inventLabel(){
+        static size_t count = 0;
+        return ++count;
+    }
+
+    virtual void placeLabel(size_t label){
+        std::cout << ":" << label << " NOP\n";
+    }
+
+    virtual void JUMP(size_t label){
+        std::cout << "JUMP " << label << "\n";
+    }
+
+    virtual void JUMP_IF(size_t label){
+        std::cout << "JUMP_IF " << label << "\n";
+    }
+
+    virtual void JUMP_IF_NOT(size_t label){
+        std::cout << "JUMP_IF_NOT " << label << "\n";
+    }
+
+    virtual void NOP(){
+        std::cout << "NOP\n";
+    }
+
+    virtual void DUP(){
+        std::cout << "DUP\n";
+    }
 };
 
 }

@@ -25,8 +25,10 @@ struct Parser {
      * @see https://en.wikipedia.org/wiki/Order_of_operations
      */
     std::unordered_map<std::string, binOp>  binaryOperators = {
-        {"+", std::make_tuple(  1, LEFT_ASSOC, [](Node* l, Node* r){ return new AddNode(l, r); })},
-        {"-", std::make_tuple(  1, LEFT_ASSOC, [](Node* l, Node* r){ return new SubNode(l, r); })},
+        {"||", std::make_tuple(30, LEFT_ASSOC, [](Node* l, Node* r){ return new OrNode(l, r); })},
+        {"&&", std::make_tuple(40, LEFT_ASSOC, [](Node* l, Node* r){ return new AndNode(l, r); })},
+        {"+", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new AddNode(l, r); })},
+        {"-", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new SubNode(l, r); })},
         {"*", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new MulNode(l, r); })},
         {"/", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new DivNode(l, r); })},
         {"%", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new ModNode(l, r); })}
