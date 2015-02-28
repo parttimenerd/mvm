@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iterator>
 #include <functional>
+#include <tuple>
 
 
 /** Type of a normal id in the following */

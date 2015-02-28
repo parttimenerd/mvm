@@ -7,7 +7,6 @@ namespace lang {
 
 template<typename T>
 struct Leaf : Node {
-    bool isLeaf = true;
     T value;
 
     Leaf(T value): value(value) {}
@@ -16,6 +15,10 @@ struct Leaf : Node {
         std::ostringstream stream;
         stream << "[" << value << "]";
         return stream.str();
+    }
+
+    virtual NodeType type(){
+        return LEAF;
     }
 };
 

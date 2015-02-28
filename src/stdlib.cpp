@@ -57,9 +57,13 @@ void loadMathLib(Env &env){
     auto div = [binary_math_op](Env* env, FunctionArguments args){
         return binary_math_op([](int_type x, int_type y){ return x / y; }, 1, env, args);
     };
-    env.addFunction("mod", 2, div);
-    auto mod = [binary_math_op](Env* env, FunctionArguments args){
-        return binary_math_op([](int_type x, int_type y){ return x % y; }, 1, env, args);
+    env.addFunction("div", 2, div);
+    auto mod = [](Env* env, FunctionArguments args){
+        int_type res = 1;
+        if (args.arguments[0]->type == Type::INT && args.arguments[1]->type == Type::INT){
+            res = static_cast<Int*>(args.arguments[0])->value % static_cast<Int*>(args.arguments[1])->value;
+        }
+        return env->createInt(res)->transfer();
     };
     env.addFunction("mod", 2, mod);
 }

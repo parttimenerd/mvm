@@ -56,5 +56,6 @@ void parse(){
     lang::Parser parser(&lexer);
     lang::Node* node = parser.parse();
     lang::Target target;
+    std::cerr << "\n" << node->str() << "\n";
     node->compile(target);
 }

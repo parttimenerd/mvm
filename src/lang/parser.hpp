@@ -6,10 +6,31 @@
 
 namespace lang {
 
+enum Associativity {
+    LEFT_ASSOC,
+    RIGHT_ASSOC
+};
+
 /**
  * @brief A simple parser for a JavaScript like language
  */
 struct Parser {
+
+    typedef std::tuple<size_t, Associativity, std::function<Node*(Node*, Node*)>> binOp;
+
+    /**
+     * Contains tuples (priority/precedence, associativity, function to create a node) for
+     * each operator
+     *
+     * @see https://en.wikipedia.org/wiki/Order_of_operations
+     */
+    std::unordered_map<std::string, binOp>  binaryOperators = {
+        {"+", std::make_tuple(  1, LEFT_ASSOC, [](Node* l, Node* r){ return new AddNode(l, r); })},
+        {"-", std::make_tuple(  1, LEFT_ASSOC, [](Node* l, Node* r){ return new SubNode(l, r); })},
+        {"*", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new MulNode(l, r); })},
+        {"/", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new DivNode(l, r); })},
+        {"%", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new ModNode(l, r); })}
+    };
 
     Lexer *lexer;
 
@@ -19,85 +40,77 @@ struct Parser {
     }
 
     Node* parse(){
-        return parseExpression();
+        return parseBlock();
+    }
+
+    Node* parseBlock(){
+        std::vector<Node*> block;
+        if (isNot(LINE_BREAK)){
+            block.push_back(parseExpression());
+        }
+        while (!ended()){
+            parse(LINE_BREAK);
+            if (isNot(LINE_BREAK)){
+                block.push_back(parseExpression());
+            }
+        }
+        return new BlockNode(block);
     }
 
     Node* parseExpression(){
-        return parseAdd();
+        return parseBinOpExpression();
     }
 
-    Node* parseAdd(){
-        std::vector<Node*> children;
-        children.push_back(parseSub());
-        while (is(PLUS)){
-            next();
-            children.push_back(parseSub());
-        }
-        if (children.size() == 1){
-            return children[0];
-        }
-        return createAddNode(children);
+    Node* parseBinOpExpression(){
+        Node* first = parseAtom();
+        return parseBinOpExpression(first, 0);
     }
 
-    Node* parseSub(){
-        std::vector<Node*> children;
-        children.push_back(parseMul());
-        while (is(MINUS)){
+    Node* parseBinOpExpression(Node* left, size_t minPrecedence){
+        while (isBinOp(current()) && binOpPrecedence(current()) >= minPrecedence){
+            auto op = *current();
             next();
-            children.push_back(parseMul());
+            auto *right = parseAtom();
+            while (isBinOp(current()) &&
+                   (binOpPrecedence(current()) > binOpPrecedence(&op)
+                    || (binOpPrecedence(current()) == binOpPrecedence(&op)
+                        && isRightAssocBinOp(current()))) ){
+                right = parseBinOpExpression(right, binOpPrecedence(current()));
+            }
+            left = createBinOpNode(&op, left, right);
         }
-        if (children.size() == 1){
-            return children[0];
-        }
-        return createSubNode(children);
+        return left;
     }
 
-    Node* parseMul(){
-        std::vector<Node*> children;
-        children.push_back(parseDiv());
-        while (is(MULTIPLY_SIGN)){
-            next();
-            children.push_back(parseDiv());
-        }
-        if (children.size() == 1){
-            return children[0];
-        }
-        return createMulNode(children);
+    bool isRightAssocBinOp(Token *op){
+        return isBinOp(op) && std::get<1>(getBinOp(op)) == Associativity::RIGHT_ASSOC;
     }
 
-    Node* parseDiv(){
-        std::vector<Node*> children;
-        children.push_back(parseMod());
-        while (is(TokenType::DIVIDE_SIGN)){
-            next();
-            children.push_back(parseMod());
-        }
-        if (children.size() == 1){
-            return children[0];
-        }
-        return createDivNode(children);
+    Node* createBinOpNode(Token *op, Node* left, Node* right){
+        return std::get<2>(getBinOp(op))(left, right);
     }
 
-    Node* parseMod(){
-        std::vector<Node*> children;
-        children.push_back(parseAtom());
-        while (is(TokenType::MOD_SIGN)){
-            next();
-            children.push_back(parseAtom());
-        }
-        if (children.size() == 1){
-            return children[0];
-        }
-        return createModNode(children);
+    size_t binOpPrecedence(Token *op){
+         return std::get<0>(getBinOp(op));
     }
+
+    binOp getBinOp(Token *op){
+        return binaryOperators[tokenTypeToString(op->type)];
+    }
+
+    bool isBinOp(Token *op){
+        std::string key = tokenTypeToString(op->type);
+        return binaryOperators.find(key) != binaryOperators.end();
+    }
+
 
     Node* parseAtom(){
         if (is(INT)){
             return parseInt();
         } else if (is(BOOLEAN)){
-            return parseString();
-        } else if (is(STRING)){
             return parseBoolean();
+        } else if (is(STRING)){
+            return parseString();
         } else if (is(NOTHING)){
             return parseNothing();
         } else if (is(LEFT_BRACE)){
@@ -132,6 +145,7 @@ struct Parser {
             arguments.push_back(parseExpression());
             //std::cout << "||>" << current()->str() << "\n";
         }
+        next();
         //std::cout << "|||" << current()->str() << "\n";
         return new CallNode(id, arguments);
     }

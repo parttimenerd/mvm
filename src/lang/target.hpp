@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../utils.hpp"
+#include "../parser.hpp"
 
 namespace lang {
 /**
@@ -15,10 +16,20 @@ struct Target {
         std::cout << "PUSH_INT " << value << "\n";
     }
 
-    virtual void PUSH_STRING(std::string escapedStr){
-        std::cout << "PUSH_STRING " << escapedStr << "\n";
+    virtual void PUSH_STRING(std::string value){
+        std::cout << "PUSH_STRING " << escape(value) << "\n";
     }
 
+    std::string escape(std::string str){
+        std::vector<std::string> replacements = {
+            "\n", "\\n",
+            "\t", "\\t"
+        };
+        for (size_t i = 0; i < replacements.size(); i += 2){
+            replaceAll(str, replacements[i], replacements[i + 1]);
+        }
+        return str;
+    }
 
     virtual void PUSH_NOTHING(){
         std::cout << "PUSH_NOTHING\n";

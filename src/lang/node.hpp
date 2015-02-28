@@ -1,16 +1,26 @@
 #pragma once
 
+//#define L std::cerr << __LINE__ << "\n";
+
 #include "../utils.hpp"
 #include "target.hpp"
+#include "lexer.hpp"
 
 namespace lang {
+
+enum NodeType {
+    BASE,
+    BINARY,
+    BINARY_C,
+    INFIX,
+    LEAF
+};
+
 
 /**
  * @brief Node of an AST
  */
 struct Node {
-
-    bool isLeaf;
 
     virtual std::vector<Node*> getChildren(){
         return std::vector<Node*>();
@@ -20,6 +30,10 @@ struct Node {
 
     virtual std::string str(){
         return "";
+    }
+
+    virtual NodeType type(){
+        return BINARY;
     }
 };
 
@@ -33,45 +47,139 @@ struct InnerNode : Node {
     }
 };
 
-template<const char* functionName>
-struct ArithmeticNode : InnerNode {
+struct BinaryOperator : Node {
+    Node* left;
+    Node* right;
 
-    using InnerNode::InnerNode;
+    BinaryOperator(Node* left, Node* right) : left(left), right(right) {}
 
-    void compile(Target &target){
-        for (size_t i = 0; i < children.size(); i++){
-            children[i]->compile(target);
-        }
-        target.CALL_N(std::string(functionName), children.size());
+    std::vector<Node*> getChildren() {
+        return {left, right};
     }
 
+    virtual NodeType type(){
+        return BINARY;
+    }
+
+    virtual TokenType op() = 0;
+
+    virtual std::string str(){
+        return std::string("{") + tokenTypeToString(op())
+                + std::string("}(") + left->str() + right->str()
+                + std::string(")");
+    }
 };
 
-static constexpr char addFuncName[] = "add";
-static constexpr char subFuncName[] = "sub";
-static constexpr char mulFuncName[] = "mul";
-static constexpr char divFuncName[] = "div";
-static constexpr char modFuncName[] = "mod";
+struct BinaryCollectableOperator : BinaryOperator {
 
-Node* createAddNode(std::vector<Node*> &children){
-    return new ArithmeticNode<addFuncName>(children);
-}
+    using BinaryOperator::BinaryOperator;
 
-Node* createSubNode(std::vector<Node*> &children){
-    return new ArithmeticNode<subFuncName>(children);
-}
+    void compile(Target &target){
+        auto vec = collectSame();
+        return compile(target, vec);
+    }
 
-Node* createMulNode(std::vector<Node*> &children){
-    return new ArithmeticNode<mulFuncName>(children);
-}
+    virtual void compile(Target&, std::vector<Node*>&) {}
 
-Node* createDivNode(std::vector<Node*> &children){
-    return new ArithmeticNode<divFuncName>(children);
-}
+    void compileNodes(Target &target, std::vector<Node*> &children){
+        for (auto *child : children){
+            child->compile(target);
+        }
+    }
 
-Node* createModNode(std::vector<Node*> &children){
-    return new ArithmeticNode<modFuncName>(children);
-}
+    bool isSame(Node* node){
+        return node->type() == type() && static_cast<BinaryCollectableOperator*>(node)->op() == op();
+    }
+
+    std::vector<Node*> collectSame(){
+        auto leftVec = collectSame(left);
+        auto rightVec = collectSame(right);
+        leftVec.insert(leftVec.end(), rightVec.begin(), rightVec.end());
+        return leftVec;
+    }
+
+    std::vector<Node*> collectSame(Node* node){
+        if (isSame(node)){
+            return static_cast<BinaryCollectableOperator*>(left)->collectSame();
+        }
+        return {node};
+    }
+
+    virtual NodeType type(){
+        return BINARY_C;
+    }
+};
+
+struct AddNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        compileNodes(target, children);
+        target.CALL_N("add", children.size());
+    }
+
+    TokenType op(){
+        return PLUS;
+    }
+};
+
+struct SubNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        compileNodes(target, children);
+        target.CALL_N("plus", children.size());
+    }
+
+    TokenType op(){
+        return MINUS;
+    }
+};
+
+struct MulNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        compileNodes(target, children);
+        target.CALL_N("mul", children.size());
+    }
+
+    TokenType op(){
+        return MULTIPLY_SIGN;
+    }
+};
+
+struct DivNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        compileNodes(target, children);
+        target.CALL_N("div", children.size());
+    }
+
+    TokenType op(){
+        return DIVIDE_SIGN;
+    }
+};
+
+struct ModNode : BinaryOperator {
+
+    using BinaryOperator::BinaryOperator;
+
+    void compile(Target &target){
+        left->compile(target);
+        right->compile(target);
+        target.CALL_N("mod", 2);
+    }
+
+    TokenType op(){
+        return MOD_SIGN;
+    }
+};
 
 struct CallNode : InnerNode {
 
@@ -83,6 +191,17 @@ struct CallNode : InnerNode {
             children[i]->compile(target);
         }
         target.CALL_N(name, children.size());
+    }
+};
+
+struct BlockNode : InnerNode {
+
+    using InnerNode::InnerNode;
+
+    void compile(Target &target){
+        for (auto *child : children){
+            child->compile(target);
+        }
     }
 };
 
