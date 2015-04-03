@@ -9,7 +9,7 @@
 
 
 void loadIOLib(Env &env){
-    auto print_env = [](Env* env, FunctionArguments){
+   /* auto print_env = [](Env* env, FunctionArguments){
         std::cout << env->heap->str();
         std::cout << env->stack->str();
         return env->createNothing()->transfer();
@@ -29,10 +29,11 @@ void loadIOLib(Env &env){
         std::cout << "\n";
         return env->createNothing()->transfer();
     };
-    env.addFunction("println", 0, println);
+    env.addFunction("println", 0, println);*/
 }
 
 void loadMathLib(Env &env){
+    /*
     auto binary_math_op = [](std::function<int_type(int_type, int_type)> math_op, int_type neutral_elem, Env* env, FunctionArguments args){
         int_type res = neutral_elem;
         for (size_t i = 0; i < args.all_arguments.size(); i++){
@@ -66,9 +67,11 @@ void loadMathLib(Env &env){
         return env->createInt(res)->transfer();
     };
     env.addFunction("mod", 2, mod);
+    */
 }
 
 void loadLogicalLib(Env &env){
+    /*
     auto equal = [](Env* env, FunctionArguments args){
         bool res = true;
         HeapObject *first = args.all_arguments[0];
@@ -78,10 +81,29 @@ void loadLogicalLib(Env &env){
                 break;
             }
         }
-        return env->createBoolean(res);
+        return env->createBoolean(res)->transfer();
     };
     env.addFunction("equal", 2, equal);
+    env.addFunction("lower", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) < *(args.arguments[1]))->transfer();
+    });
+    env.addFunction("leq", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) <= *(args.arguments[1]))->transfer();
+    });
+    env.addFunction("greater", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) > *(args.arguments[1]))->transfer();
+    });
+    env.addFunction("geq", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) >= *(args.arguments[1]))->transfer();
+    });
+    env.addFunction("eq", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) == *(args.arguments[1]))->transfer();
+    });
+    env.addFunction("neq", 2, [](Env* env, FunctionArguments args){
+        return env->createBoolean(*(args.arguments[0]) != *(args.arguments[1]))->transfer();
+    });*/
 }
+
 
 void loadStdLib(Env &env){
     loadMathLib(env);

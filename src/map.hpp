@@ -3,17 +3,18 @@
 
 #include "utils.hpp"
 #include "heapobject.hpp"
-#include "int.hpp"
-#include "string.hpp"
+#include "reference.hpp"
 
 /**
  * A map that has either Ints or Strings as keys.
  */
 struct Map : HeapObject {
-    std::map<HeapObject*, HeapObject*> map;
+    std::map<HeapObject*, Reference<HeapObject>*> map;
     Type content_type = Type::NOTHING;
 
-	Map(Env *env) : HeapObject(Type::MAP, env) {}
+    Map(Env *env,
+        std::map<HeapObject*, Reference<HeapObject>*> value = std::map<HeapObject*, Reference<HeapObject>*>(),
+        bool reference = true);
 
 	std::string str(){
         std::ostringstream stream;
@@ -25,34 +26,13 @@ struct Map : HeapObject {
 		return stream.str();
 	}
 
-	HeapObject* get(HeapObject *key){
-        return has(key) ? map[key] : env->createNothing();
-	}
+    HeapObject* get(HeapObject *key);
 
 	size_t size(){
         return map.size();
 	}
 
-	void set(HeapObject *key, HeapObject *value){
-        if (content_type == Type::NOTHING){
-            if (key->type == Type::STRING || key->type == Type::INT){
-                content_type = key->type;
-            } else {
-                throw std::string("Key has wrong type");
-            }
-        }
-        if (key->type == content_type){
-            if (has(key)){
-                HeapObject* old = map[key];
-                if (old != value){
-                    old->dereference();
-                    map[key] = value;
-                }
-            } else {
-                map[key] = value;
-            }
-        }
-	}
+    void set(HeapObject *key, Reference<HeapObject>* value);
 
 	bool has(HeapObject *key){
         return map.find(key) != map.end();
@@ -65,6 +45,10 @@ struct Map : HeapObject {
     bool operator>(HeapObject&){
 		return false;
 	}
+
+    virtual Reference<HeapObject>* copy();
+
+    virtual void _set(HeapObject *other);
 };
 
 #endif

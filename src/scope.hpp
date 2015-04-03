@@ -8,7 +8,7 @@ struct Heap;
 struct Scope : HeapObject {
     bool isRoot = false;
     Scope* parent = nullptr;
-    std::unordered_map<std::string, HeapObject*> variables;
+    std::unordered_map<std::string, Reference<HeapObject>*> variables;
 
    // Scope(Heap *heap);
 
@@ -23,9 +23,13 @@ struct Scope : HeapObject {
 
     void set(std::string varname, HeapObject* obj, bool reference = true);
 
+    void setDirect(std::string varname, HeapObject* obj, bool reference = true);
+
     void setHere(std::string varname, HeapObject* obj, bool reference = true);
 
-    HeapObject* get(std::string varname, bool returnNothing = true);
+    void setHereDirect(std::string varname, HeapObject* obj, bool reference = true);
+
+    Reference<HeapObject>* get(std::string varname, bool returnNothing = true);
 
     bool has(std::string varname, bool recursive = true);
 

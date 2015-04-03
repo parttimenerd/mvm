@@ -2,18 +2,33 @@
 
 #include "utils.hpp"
 
-struct HeapObject;
+/*template<class T>
+struct Reference;
+template<class T>
+struct SmartReference;*/
+#include "reference.hpp"
 
 struct Stack {
 
-	std::vector<HeapObject*> stack;
+    std::vector<Reference<HeapObject>*> stack;
     std::vector<size_t> frameStack;
 
-	HeapObject* pop(bool dereference = false);
+    Reference<HeapObject>* pop(bool dereference = false);
 
     void popAndDeref();
 
-	void push(HeapObject *obj, bool reference = true);
+    template<class T>
+    void push(Reference<T> *obj, bool reference = true){
+        stack.push_back((Reference<HeapObject>*)obj);
+        if (reference){
+            obj->reference();
+        }
+    }
+
+    template<class T>
+    void push(SmartReference<T> &obj){
+        push(obj.reference);
+    }
 
     void dup();
 
@@ -38,7 +53,7 @@ struct Stack {
         cleanToSize(newSize, dereference);
     }
 
-    void popFrameAndAddReturn(HeapObject *returnVal, bool dereference = false, bool reference = true){
+    void popFrameAndAddReturn(Reference<HeapObject> *returnVal, bool dereference = false, bool reference = true){
         popFrame(dereference);
         push(returnVal, reference);
     }

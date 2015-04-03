@@ -9,7 +9,7 @@ struct Boolean : HeapObject {
 
     bool isTrue;
 
-	Boolean(Env *env, bool isTrue) : HeapObject(Type::BOOLEAN, env) {
+    Boolean(Env *env, bool isTrue) : HeapObject(Type::BOOLEAN, env) {
         this->isTrue = isTrue;
 	}
 
@@ -23,6 +23,14 @@ struct Boolean : HeapObject {
 
     bool toBool(){
         return isTrue;
+    }
+
+    virtual Reference<HeapObject>* copy(){
+        return (Reference<HeapObject>*)new Reference<Boolean>(env, new Boolean(env, isTrue));
+    }
+
+    virtual void _set(HeapObject *other){
+        isTrue = ((Boolean*)other)->isTrue;
     }
 };
 

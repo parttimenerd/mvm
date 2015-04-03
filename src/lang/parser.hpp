@@ -27,6 +27,12 @@ struct Parser {
     std::unordered_map<std::string, binOp>  binaryOperators = {
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Node* l, Node* r){ return new OrNode(l, r); })},
         {"&&", std::make_tuple(40, LEFT_ASSOC, [](Node* l, Node* r){ return new AndNode(l, r); })},
+        {"!=", std::make_tuple(41, LEFT_ASSOC, [](Node* l, Node* r){ return new NotEqualNode(l, r); })},
+        {"==", std::make_tuple(41, LEFT_ASSOC, [](Node* l, Node* r){ return new EqualNode(l, r); })},
+        {"<", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new LowerNode(l, r); })},
+        {">", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new GreaterNode(l, r); })},
+        {"<=", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new LowerEqualNode(l, r); })},
+        {">=", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new GreaterEqualNode(l, r); })},
         {"+", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new AddNode(l, r); })},
         {"-", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new SubNode(l, r); })},
         {"*", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new MulNode(l, r); })},

@@ -43,6 +43,10 @@ enum TokenType {
     NEGATE,
     NOT,
     NOT_EQUAL,
+    LOWER_EQUAL,
+    GREATER_EQUAL,
+    LOWER,
+    GREATER,
     AND,
     OR,
     END,
@@ -83,6 +87,10 @@ std::string tokenTypeToString(TokenType type){
         case NEGATE: return "NEGATE";
         case NOT: return "!";
         case NOT_EQUAL: return "!=";
+        case LOWER_EQUAL: return "<=";
+        case GREATER_EQUAL: return ">=";
+        case LOWER: return "<";
+        case GREATER: return ">";
         case AND: return "&&";
         case OR: return "||";
         case BOOLEAN: return "BOOLEAN";
@@ -223,6 +231,22 @@ struct Lexer {
             case ':':
                 next();
                 return token(COLON);
+            case '<':
+                next();
+                if (is('=')){
+                    next();
+                    return token(LOWER_EQUAL);
+                } else {
+                    return token(LOWER);
+                }
+            case '>':
+                next();
+                if (is('=')){
+                    next();
+                    return token(GREATER_EQUAL);
+                } else {
+                    return token(GREATER);
+                }
             case '/':
                 next();
                 if (is('/')){
@@ -394,6 +418,7 @@ struct Lexer {
     }
 
     Token* parseEqualSigns(){
+        next();
         if (is('=')){
             next();
             return token(DOUBLE_EQUAL_SIGN);

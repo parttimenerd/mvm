@@ -19,6 +19,10 @@ struct Nothing : HeapObject {
     bool toBool(){
         return false;
     }
+
+    virtual Reference<HeapObject>* copy(){
+        return (Reference<HeapObject>*)new Reference<Nothing>(env, new Nothing(env));
+    }
 };
 
 #endif

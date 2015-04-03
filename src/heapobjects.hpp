@@ -2,6 +2,7 @@
 #define HEAP_OBJECTS
 
 #include "heapobject.hpp"
+#include "reference.hpp"
 #include "nothing.hpp"
 #include "boolean.hpp"
 #include "int.hpp"

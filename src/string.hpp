@@ -7,7 +7,7 @@
 struct String : HeapObject {
 	std::string value;
 
-	String(Env *env, std::string value) : HeapObject(Type::STRING, env) {
+    String(Env *env, std::string value) : HeapObject(Type::STRING, env) {
 		this->value = value;
 	}
 
@@ -45,6 +45,14 @@ struct String : HeapObject {
 	bool operator<(HeapObject* obj){
         return obj->type == type && value.compare(((String*)&obj)->value) < 0;
 	}
+
+    virtual Reference<HeapObject>* copy(){
+        return (Reference<HeapObject>*)new Reference<String>(env, new String(env, value));
+    }
+
+    virtual void _set(HeapObject *other){
+        value = ((String*)other)->value;
+    }
 };
 
 #endif

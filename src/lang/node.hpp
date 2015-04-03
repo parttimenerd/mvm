@@ -189,11 +189,11 @@ struct AndNode : BinaryCollectableOperator {
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
         for (size_t i = 0; i < children.size() - 1; i++){
-            left->compile(target);
+            children[i]->compile(target);
             target.DUP();
             target.JUMP_IF_NOT(endLabel);
         }
-        right->compile(target);
+        children[children.size() - 1]->compile(target);
         target.placeLabel(endLabel);
     }
 
@@ -209,16 +209,120 @@ struct OrNode : BinaryCollectableOperator {
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
         for (size_t i = 0; i < children.size() - 1; i++){
-            left->compile(target);
+            children[i]->compile(target);
             target.DUP();
             target.JUMP_IF(endLabel);
         }
-        right->compile(target);
+        children[children.size() - 1]->compile(target);
         target.placeLabel(endLabel);
     }
 
     TokenType op(){
         return OR;
+    }
+};
+
+struct ChainedLogicalNode : BinaryCollectableOperator {
+
+    using BinaryCollectableOperator::BinaryCollectableOperator;
+
+    void compile(Target &target, std::vector<Node*> &children){
+        size_t falseLabel = target.inventLabel();
+        for (size_t i = 0; i < children.size() - 1; i++){
+            children[i]->compile(target);
+            children[i + 1]->compile(target);
+            target.CALL_N(methodName(), 2);
+            target.JUMP_IF_NOT(falseLabel);
+        }
+        size_t endLabel = target.inventLabel();
+        target.PUSH_BOOLEAN(true);
+        target.JUMP(endLabel);
+        target.placeLabel(falseLabel);
+        target.PUSH_BOOLEAN(false);
+        target.placeLabel(endLabel);
+    }
+
+    virtual std::string methodName(){
+        return "";
+    }
+
+};
+
+struct LowerNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "lower";
+    }
+
+    TokenType op(){
+        return LOWER;
+    }
+};
+
+struct LowerEqualNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "leq";
+    }
+
+    TokenType op(){
+        return LOWER_EQUAL;
+    }
+};
+
+struct GreaterNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "greater";
+    }
+
+    TokenType op(){
+        return GREATER;
+    }
+};
+
+struct GreaterEqualNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "geq";
+    }
+
+    TokenType op(){
+        return GREATER_EQUAL;
+    }
+};
+
+struct EqualNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "eq";
+    }
+
+    TokenType op(){
+        return DOUBLE_EQUAL_SIGN;
+    }
+};
+
+struct NotEqualNode : ChainedLogicalNode {
+
+    using ChainedLogicalNode::ChainedLogicalNode;
+
+    std::string methodName(){
+        return "neq";
+    }
+
+    TokenType op(){
+        return NOT_EQUAL;
     }
 };
 

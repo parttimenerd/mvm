@@ -11,7 +11,8 @@ Scope::Scope(Env *env, Scope *scope) : HeapObject(Type::SCOPE, env) {
     }
 }
 
-void Scope::set(std::string varname, HeapObject* obj, bool reference){
+void Scope::set(std::string varname, HeapObject* _obj, bool reference){
+    Reference<HeapObject>* obj = toReference(_obj);
     bool hasSelf = variables.find(varname) != variables.end();
     bool hasWhole = has(varname);
     if (hasWhole && !hasSelf){
@@ -34,7 +35,13 @@ void Scope::set(std::string varname, HeapObject* obj, bool reference){
     }
 }
 
-void Scope::setHere(std::string varname, HeapObject* obj, bool reference){
+void Scope::setDirect(std::string varname, HeapObject* obj, bool reference){
+    (void)reference;
+    get(varname, true)->value->set(obj);
+}
+
+void Scope::setHere(std::string varname, HeapObject* _obj, bool reference){
+    Reference<HeapObject> *obj = toReference(_obj);
     bool hasSelf = variables.find(varname) != variables.end();
     if (hasSelf){
         if (obj != variables[varname]){
@@ -52,11 +59,17 @@ void Scope::setHere(std::string varname, HeapObject* obj, bool reference){
     }
 }
 
-HeapObject* Scope::get(std::string varname, bool returnNothing){
+void Scope::setHereDirect(std::string varname, HeapObject* obj, bool){
+    if (variables.find(varname) != variables.end()){
+        variables[varname]->value->set(obj);
+    }
+}
+
+Reference<HeapObject>* Scope::get(std::string varname, bool returnNothing){
     if (variables.find(varname) != variables.end()){
         return variables[varname];
     } else if (isRoot){
-        return returnNothing ? env->createNothing() : 0;
+        return returnNothing ? (Reference<HeapObject>*)env->createNothing() : 0;
     } else {
         return parent->get(varname, returnNothing);
     }

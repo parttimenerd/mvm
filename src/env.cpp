@@ -2,6 +2,7 @@
 
 #include "env.hpp"
 #include "scope.hpp"
+#include "reference.hpp"
 #include "heapobjects.hpp"
 #include "interpreter.hpp"
 #include "parser.hpp"
@@ -11,8 +12,8 @@ Env::Env(){
     stack = new Stack();
     root_scope = new Scope(this);
     root_scope->reference();
-    nothing = new Nothing(this);
-    nothing->reference();
+    _nothing = new Nothing(this);
+    _nothing->reference();
 }
 
 void Env::dereference(HeapObject *obj){
@@ -23,62 +24,41 @@ void Env::add(HeapObject *obj){
     heap->add(obj);
 }
 
-Int* Env::createInt(int_type val, bool reference){
+Reference<Int>* Env::createInt(int_type val, bool reference){
     Int *integer = new Int(this, val);
-    if (reference) {
-        integer->reference();
-    }
-    return integer;
+    return new Reference<Int>(this, integer, reference);
 }
 
-Nothing* Env::createNothing(bool reference){
-    if (reference) {
-        nothing->reference();
-    }
-    return nothing;
+Reference<Nothing>* Env::createNothing(bool reference){
+    return new Reference<Nothing>(this, _nothing, reference);
 }
 
-Array* Env::createArray(std::vector<HeapObject*> value, bool reference){
-    Array* arr = new Array(this, value);
-    if (reference) {
-        arr->reference();
-    }
-    return arr;
+Reference<Array>* Env::createArray(std::vector<Reference<HeapObject>*> value, bool reference){
+    Array* arr = new Array(this, value, reference);
+    return new Reference<Array>(this, arr, reference);
 }
 
-Map* Env::createMap(bool reference){
-    Map* map = new Map(this);
-    if (reference) {
-        map->reference();
-    }
-    return map;
+Reference<Map>* Env::createMap(std::map<HeapObject*, Reference<HeapObject>*> value, bool reference){
+    Map* map = new Map(this, value, reference);
+    return new Reference<Map>(this, map, reference);
 }
 
-Boolean* Env::createBoolean(bool isTrue, bool reference){
+Reference<Boolean>* Env::createBoolean(bool isTrue, bool reference){
     Boolean* boolean = new Boolean(this, isTrue);
-    if (reference) {
-        boolean->reference();
-    }
-    return boolean;
+    return new Reference<Boolean>(this, boolean, reference);
 }
 
-String* Env::createString(std::string value, bool reference){
+Reference<String>* Env::createString(std::string value, bool reference){
     String* str = new String(this, value);
-    if (reference) {
-        str->reference();
-    }
-    return str;
+    return new Reference<String>(this, str, reference);
 }
 
-CodeFunction* Env::createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
+Reference<CodeFunction>* Env::createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
     CodeFunction *func = new CodeFunction(this, parent_scope, parameters, lines);
-    if (reference){
-        func->reference();
-    }
-    return func;
+    return new Reference<CodeFunction>(this, func, reference);
 }
 
-void Env::addFunction(std::string name, size_t parameter_count, std::function<HeapObject*(Env*, FunctionArguments)> implFunc){
+void Env::addFunction(std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments)> implFunc){
     auto *obj = new CPPFunction(this, parameter_count, implFunc);
     obj->name = name;
     root_scope->set(name, obj);

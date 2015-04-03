@@ -9,10 +9,15 @@
  * Resizable array
  */
 struct Array : HeapObject {
-    std::vector<HeapObject*> value;
+    std::vector<Reference<HeapObject>*> value;
 
-	Array(Env *env, std::vector<HeapObject*> value) : HeapObject(Type::ARRAY, env) {
+    Array(Env *env, std::vector<Reference<HeapObject>*> value, bool reference = true) : HeapObject(Type::ARRAY, env) {
 		this->value = value;
+        if (reference) {
+            for (auto& element : value) {
+                element->reference();
+            }
+        }
 	}
 
 	std::string str(){
@@ -33,16 +38,24 @@ struct Array : HeapObject {
         return value.size();
 	}
 
-	void set(size_t i, HeapObject *obj, bool reference = true){
+    void set(size_t i, Reference<HeapObject> *obj, bool reference = true){
         value[i] = obj;
         if (reference){
             obj->reference();
         }
 	}
 
-	void add(HeapObject *obj){
+    void set(size_t i, HeapObject *obj, bool reference = true){
+        value[i] = new Reference<HeapObject>(env, obj, reference);
+    }
+
+    void add(Reference<HeapObject> *obj){
         value.push_back(obj);
 	}
+
+    void add(HeapObject *obj){
+        value.push_back(new Reference<HeapObject>(env, obj));
+    }
 
     bool operator==(HeapObject&){
 		return false;
@@ -51,6 +64,21 @@ struct Array : HeapObject {
     bool operator>(HeapObject&){
 		return false;
 	}
+
+    virtual Reference<HeapObject>* copy(){
+        return (Reference<HeapObject>*)new Reference<Array>(env, new Array(env, value));
+    }
+
+    virtual void _set(HeapObject *other){
+        auto new_value = ((Array*)other)->value;
+        for (auto &val : new_value){
+            val->reference();
+        }
+        for (auto &val : value){
+            val->dereference();
+        }
+        value = new_value;
+    }
 };
 
 #endif

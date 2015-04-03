@@ -6,6 +6,46 @@ How to run the hello world program: run `./mvm < examples/hello_world.mvm`.
 
 How to run the test suite: run `./test.sh` (it requires ruby and colordiff to be installed)
 
+Ideas
+---------------
+- most operators are equal
+- operators either start with a backslash or consist entirely of characters like '+', '-' or '%'
+- functions are called via 'func arg1, …, argN' or 'func(arg1, …)'
+- the variable object of functions is accessed via '(func)', same for operators, …
+- need a reference type
+	- consisting of a scope pointer and a variable name
+	- or of an map pointer and a key
+	- or of an array pointer and an index
+	- right?????
+	- maybe: all variables (in scopes) should point to reference objects
+		- this reference objects contain a pointer to the real objects
+		- the prefix operator `&` could create a new reference
+		- disadvantages: one more indirection by default and more objects for the GC
+		- `a = b` =~ a points to the reference object that points to
+			- see hardlinks
+		- `a = &b` =~ a isn't a hardlink to b, although it has the same value
+		- `a [operator] b` should represent the following
+			`push reference of a on stack, push reference of b on stack, call operator`
+			- `=`, `==` or `*=` is just a normal operators, that get to references as arguments
+			- `[…]` is a postfix operator: `reference -> reference -> reference`
+		- pass by value has to be denoted explicitely in the function header
+		- the stack only consists of references to objects 
+- no need for special increment or decrement operators
+- (…) or \[…\] are just normal operators (that consist of more than one character)
+	- could be defined via `#~ unary postfix 100 [a] -> func` (func: `ref -> ref -> ref``
+- there shouldn't be any hard coded operators, all operators should be defined in a mvm source file
+	- `=` could be implemented as `#~ binary left = -> equal`
+	- add functionality to parseAtom() to support unary operators
+- haskell like functions as operators, e.g. `\`elementOf\``
+
+- featuritis alarm going on!!! references are okay, but user defined operators should be supported
+	- array
+
+TODO
+------------
+- develop the standard library
+- improve parser and lexer 
+
 Verbose Bytecode
 =================
 The vm should eventually support byte code of the format `[Command code byte][data]\n`. But for simplicity reasons it, most of the time a more textual representation of the code is used. It's called "verbose bytecode". Each statement of this code adheres the format `[Command name] [Textual representation of it's argument (if it needs one), eg. "12" for the number 12]\n`.

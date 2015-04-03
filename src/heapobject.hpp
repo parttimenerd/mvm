@@ -2,8 +2,9 @@
 
 #include "utils.hpp"
 
-#include "env.hpp"
-#include "heap.hpp"
+struct Env;
+template<class T>
+struct Reference;
 
 /** Types */
 enum class Type : id_type {
@@ -15,7 +16,8 @@ enum class Type : id_type {
 	MAP,
 	ARRAY,
 	SCOPE,
-	FUNCTION
+    FUNCTION,
+    REFERENCE
 };
 
 /**
@@ -26,7 +28,7 @@ struct HeapObject {
 	id_type id;
 	uint32_t reference_count = 0;
 
-	Env *env;
+    Env *env;
 
 	/**
 	 * Initialize a new HeapObject in the passed environment
@@ -34,11 +36,7 @@ struct HeapObject {
 	 * @param type type of the object (@see Type)
 	 * @param env passed environment
 	 */
-	HeapObject(Type type, Env *env){
-		this->type = type;
-		this->env = env;
-		this->env->add(this);
-	}
+    HeapObject(Type type, Env *env);
 
 	virtual std::string str(){
 		return "";
@@ -52,9 +50,12 @@ struct HeapObject {
 		return std::vector<HeapObject*>();
 	}
 
-	virtual id_type copy(){
-		return 0;
-	}
+    virtual Reference<HeapObject>* copy();
+
+    virtual void set(HeapObject *other);
+
+    virtual void _set(HeapObject*){
+    }
 
     virtual bool operator==(HeapObject &obj){
         return obj.id == id;
@@ -64,6 +65,22 @@ struct HeapObject {
         return false;
 	}
 
+    bool operator<=(HeapObject &obj){
+        return *this < obj || *this == obj;
+    }
+
+    bool operator>=(HeapObject &obj){
+        return !(*this < obj);
+    }
+
+    bool operator>(HeapObject &obj){
+        return obj < *this;
+    }
+
+    virtual bool operator!=(HeapObject &obj){
+        return !(*this == obj);
+    }
+
     virtual bool toBool(){
         return true;
     }
@@ -72,17 +89,21 @@ struct HeapObject {
         reference_count++;
 	}
 
-	void dereference(){
-        env->dereference(this);
-	}
+    void dereference();
 
-	HeapObject* transfer(){
-        if (reference_count == 0){
-            throw std::string("Ref count of ") + escapedStr() + std::string(" is 0, can't reduce it");
-        }
-        reference_count--;
-        return this;
-	}
+    bool is(Type type){
+        return this->type == type;
+    }
+
+    bool isReference(){
+        return this->type == Type::REFERENCE;
+    }
+
+    bool isMap(){
+        return this->type == Type::MAP || this->type == Type::FUNCTION;
+    }
+
+    HeapObject* transfer();
 
 	virtual ~HeapObject() = default;
 };

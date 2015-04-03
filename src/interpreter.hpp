@@ -29,25 +29,25 @@ struct Interpreter {
             //std::cout << currentPos << " " << baseScope->get("abc")->str() << "\n";
         switch (line->type){
             case LineType::PUSH_STRING:
-                env->stack->push(env->createString(toArgLine<std::string>(line)->argument)->transfer());
+                env->stack->push(env->string(toArgLine<std::string>(line)->argument)->transfer());
                 break;
             case LineType::PUSH_NOTHING:
                 env->stack->push(env->createNothing()->transfer());
                 break;
             case LineType::PUSH_BOOLEAN:
-                env->stack->push(env->createBoolean(toArgLine<bool>(line)->argument)->transfer());
+                env->stack->push(env->boolean(toArgLine<bool>(line)->argument)->transfer());
                 break;
             case LineType::PUSH_INT:
                 {
                     int_type value = toArgLine<int_type>(line)->argument;
-                    env->stack->push(env->createInt(value)->transfer());
+                    env->stack->push(env->integer(value)->transfer());
                 }
                 break;
             case LineType::PUSH_ARRAY:
-                env->stack->push(env->createArray()->transfer());
+                env->stack->push(env->array()->transfer());
                 break;
             case LineType::PUSH_MAP:
-                env->stack->push(env->createMap()->transfer());
+                env->stack->push(env->map()->transfer());
                 break;
             case LineType::PUSH_VAR:
                 env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
@@ -57,7 +57,7 @@ struct Interpreter {
                 break;
             case LineType::SET_VAR_HERE2:
                 {
-                    auto *obj = env->stack->pop();
+                    auto *obj = env->stack->pop()->value;
                     if (obj->type == Type::STRING){
                         scope->setHere(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
                     } else {
@@ -71,7 +71,7 @@ struct Interpreter {
                 break;
             case LineType::SET_VAR2:
                 {
-                    auto *obj = env->stack->pop();
+                    auto *obj = env->stack->pop()->value;
                     if (obj->type == Type::STRING){
                         scope->set(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
                     } else {
@@ -94,7 +94,7 @@ struct Interpreter {
                 break;
              case LineType::JUMP_IF:
                 {
-                    HeapObject *obj = env->stack->pop();
+                    Reference<HeapObject> *obj = env->stack->pop();
                     if (obj->toBool()){
                         //std::cout << currentPos << "\n";
                         currentPos = toArgLine<size_t>(line)->argument - 1;
@@ -105,7 +105,7 @@ struct Interpreter {
                 break;
             case LineType::JUMP_IF_NOT:
                {
-                   HeapObject *obj = env->stack->pop();
+                   Reference<HeapObject> *obj = env->stack->pop();
                    if (!obj->toBool()){
                        //std::cout << currentPos << "\n";
                        currentPos = toArgLine<size_t>(line)->argument - 1;
@@ -166,11 +166,11 @@ struct Interpreter {
      * @brief call with default number of arguments
      */
     void callDefault(){
-        HeapObject *obj = env->stack->pop();
-        Function *func = static_cast<Function*>(obj);
-        std::vector<HeapObject*> args;
+        Reference<HeapObject> *obj = env->stack->pop();
+        Function *func = static_cast<Function*>(obj->value);
+        std::vector<Reference<HeapObject>*> args;
         while (args.size() < func->parameter_count){
-            HeapObject *argObj = env->stack->pop();
+            Reference<HeapObject> *argObj = env->stack->pop();
             args.push_back(argObj);
         }
         func->exec(args);
@@ -179,31 +179,32 @@ struct Interpreter {
     void call(size_t numberOfArguments = 99999999999){
         //std::cerr << currentPos << "aa\n";
         if (numberOfArguments == 99999999999){
-            HeapObject* num = env->stack->pop();
-            if (num->type == Type::INT){
-                numberOfArguments = (size_t) static_cast<Int*>(num)->value;
+            Reference<HeapObject>* num = env->stack->pop();
+            if (num->value->type == Type::INT){
+                numberOfArguments = (size_t) static_cast<Int*>(num->value)->value;
             }
             num->dereference();
         }
-        HeapObject *obj = env->stack->pop();
-        if (obj->type != Type::FUNCTION){
+        Reference<HeapObject> *obj = env->stack->pop();
+        if (obj->value->type != Type::FUNCTION){
             env->stack->push(obj->transfer());
             std::cerr << "No function\n";
         } else {
-            std::vector<HeapObject*> args;
+            std::vector<Reference<HeapObject>*> args;
             while (args.size() < numberOfArguments){
-                HeapObject *argObj = env->stack->pop();
+                Reference<HeapObject> *argObj = env->stack->pop();
                 //std::cerr << "######\n" << env->stack->str() ;
                 //std::cerr << "a   " << argObj->reference_count << "\n";
                 args.push_back(argObj);
                 //std::cout << "ARG " << args[args.size() - 1]->str() << "\n";
             }
             std::reverse(args.begin(), args.end());
-            Function *func = static_cast<Function*>(obj);
+            Function *func = static_cast<Function*>(obj->value);
             //std::cout << func->str();
             func->exec(args);
             //std::cout << env->stack->str();
         }
+        obj->dereference();
     }
 
     void pushScope(){
