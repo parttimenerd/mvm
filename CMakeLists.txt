@@ -58,12 +58,12 @@ LIST(REMOVE_ITEM library_sources ${PROJECT_SOURCE_DIR} src/main.cpp)
 ### mvm_library ###
 ###################
 
-ADD_LIBRARY(mvm_library
-	${library_sources}
-)
+#ADD_LIBRARY(mvm_library
+#	${library_sources}
+#)
 
-SET_TARGET_PROPERTIES(mvm_library PROPERTIES LINKER_LANGUAGE CXX)
-SET_TARGET_PROPERTIES(mvm_library PROPERTIES OUTPUT_NAME mvm)
+#SET_TARGET_PROPERTIES(mvm_library PROPERTIES LINKER_LANGUAGE CXX)
+#SET_TARGET_PROPERTIES(mvm_library PROPERTIES OUTPUT_NAME mvm)
 
 ######################
 ### mvm_executable ###

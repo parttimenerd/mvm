@@ -3,6 +3,7 @@
 
 #include "utils.hpp"
 #include "heapobject.hpp"
+#include <typeinfo>
 
 
 /**
@@ -20,11 +21,19 @@ struct Reference : HeapObject {
         if (reference){
             value->reference();
         }
+        reference_count = 1;
     }
 
     std::string str(){
         std::ostringstream stream;
         stream << "[ref to:" << value->str() << stream << "]";
+        return stream.str();
+    }
+
+
+    std::string escapedStr(){
+        std::ostringstream stream;
+        stream << "[ref to:" << value->str() << "]";
         return stream.str();
     }
 

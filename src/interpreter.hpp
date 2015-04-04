@@ -52,33 +52,11 @@ struct Interpreter {
             case LineType::PUSH_VAR:
                 env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
                 break;
-            case LineType::SET_VAR_HERE:
-                scope->setHere(toArgLine<std::string>(line)->argument, env->stack->pop());
-                break;
-            case LineType::SET_VAR_HERE2:
-                {
-                    auto *obj = env->stack->pop()->value;
-                    if (obj->type == Type::STRING){
-                        scope->setHere(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
-                    } else {
-                        error("Expected string on stack for SET_VAR2 command");
-                    }
-                    obj->dereference();
-                }
-                break;
             case LineType::SET_VAR:
                 scope->set(toArgLine<std::string>(line)->argument, env->stack->pop());
                 break;
-            case LineType::SET_VAR2:
-                {
-                    auto *obj = env->stack->pop()->value;
-                    if (obj->type == Type::STRING){
-                        scope->set(static_cast<String*>(obj)->value, env->stack->pop()->transfer());
-                    } else {
-                        error("Expected string on stack for SET_VAR2 command");
-                    }
-                    obj->dereference();
-                }
+            case LineType::INIT_VAR:
+                scope->initVar(toArgLine<std::string>(line)->argument);
                 break;
             case LineType::CALL_N:
                 call(toArgLine<size_t>(line)->argument);
@@ -103,17 +81,6 @@ struct Interpreter {
                     obj->dereference();
                 }
                 break;
-            case LineType::JUMP_IF_NOT:
-               {
-                   Reference<HeapObject> *obj = env->stack->pop();
-                   if (!obj->toBool()){
-                       //std::cout << currentPos << "\n";
-                       currentPos = toArgLine<size_t>(line)->argument - 1;
-                       //std::cout << currentPos << "\n";
-                   }
-                   obj->dereference();
-               }
-               break;
             case LineType::POP:
                 env->stack->popAndDeref();
                 break;

@@ -36,44 +36,44 @@ struct Env {
     void add(HeapObject *obj);
 
     Reference<Int>* createInt(int_type val, bool reference = true);
-    Reference<Int>* integer(int_type val){
-        return createInt(val);
+    Reference<HeapObject>* integer(int_type val){
+        return (Reference<HeapObject>*)createInt(val);
     }
 
     Reference<Nothing>* createNothing(bool reference = true);
 
-    Reference<Nothing>* nothing(){
-        return createNothing();
+    Reference<HeapObject>* nothing(){
+        return (Reference<HeapObject>*)createNothing();
     }
 
     Reference<Array>* createArray(std::vector<Reference<HeapObject>*> value = std::vector<Reference<HeapObject>*>(), bool reference = true);
 
-    Reference<Array>* array(std::vector<Reference<HeapObject>*> value = std::vector<Reference<HeapObject>*>()){
-        return createArray(value);
+    Reference<HeapObject>* array(std::vector<Reference<HeapObject>*> value = std::vector<Reference<HeapObject>*>()){
+        return (Reference<HeapObject>*)createArray(value);
     }
 
     Reference<Map>* createMap(std::map<HeapObject*, Reference<HeapObject>*> value = std::map<HeapObject*, Reference<HeapObject>*>(), bool reference = true);
 
-    Reference<Map>* map(std::map<HeapObject*, Reference<HeapObject>*> value = std::map<HeapObject*, Reference<HeapObject>*>()){
-        return createMap(value);
+    Reference<HeapObject>* map(std::map<HeapObject*, Reference<HeapObject>*> value = std::map<HeapObject*, Reference<HeapObject>*>()){
+        return (Reference<HeapObject>*)createMap(value);
     }
 
     Reference<Boolean>* createBoolean(bool isTrue, bool reference = true);
 
-    Reference<Boolean>* boolean(bool isTrue){
-        return createBoolean(isTrue);
+    Reference<HeapObject>* boolean(bool isTrue){
+        return (Reference<HeapObject>*)createBoolean(isTrue);
     }
 
     Reference<String>* createString(std::string value, bool reference = true);
 
-    Reference<String>* string(std::string value){
-        return createString(value);
+    Reference<HeapObject>* string(std::string value){
+        return (Reference<HeapObject>*)createString(value);
     }
 
     Reference<CodeFunction>* createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference = true);
 
-    Reference<CodeFunction>* codefunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines){
-        return createFunction(parent_scope, parameters, lines);
+    Reference<HeapObject>* codefunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines){
+        return (Reference<HeapObject>*)createFunction(parent_scope, parameters, lines);
     }
 
     void interpret(Scope *function_base_scope, std::vector<Line*> code);

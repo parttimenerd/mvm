@@ -35,9 +35,11 @@ void Scope::set(std::string varname, HeapObject* _obj, bool reference){
     }
 }
 
-void Scope::setDirect(std::string varname, HeapObject* obj, bool reference){
-    (void)reference;
-    get(varname, true)->value->set(obj);
+void Scope::initVar(std::string varname){
+    bool hasSelf = variables.find(varname) != variables.end();
+    if (!hasSelf){
+        variables[varname] = env->nothing();
+    }
 }
 
 void Scope::setHere(std::string varname, HeapObject* _obj, bool reference){
@@ -56,12 +58,6 @@ void Scope::setHere(std::string varname, HeapObject* _obj, bool reference){
         if (reference){
             obj->reference();
         }
-    }
-}
-
-void Scope::setHereDirect(std::string varname, HeapObject* obj, bool){
-    if (variables.find(varname) != variables.end()){
-        variables[varname]->value->set(obj);
     }
 }
 

@@ -23,11 +23,9 @@ struct Scope : HeapObject {
 
     void set(std::string varname, HeapObject* obj, bool reference = true);
 
-    void setDirect(std::string varname, HeapObject* obj, bool reference = true);
+    void initVar(std::string varname);
 
     void setHere(std::string varname, HeapObject* obj, bool reference = true);
-
-    void setHereDirect(std::string varname, HeapObject* obj, bool reference = true);
 
     Reference<HeapObject>* get(std::string varname, bool returnNothing = true);
 
