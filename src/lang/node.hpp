@@ -45,6 +45,8 @@ struct Node {
     virtual NodeType type(){
         return BINARY;
     }
+
+    virtual ~Node(){}
 };
 
 struct InnerNode : Node {
@@ -99,7 +101,7 @@ struct CollectableInfixOperator : InfixOperator {
         compile(target, vec);
     }
 
-    virtual void compile(Target &target, std::vector<Node*> &children) {}
+    virtual void compile(Target&, std::vector<Node*>&) {}
 
     void compileNodes(Target &target, std::vector<Node*> &children){
         for (auto *child : children){
@@ -238,16 +240,21 @@ struct ChainedLogicalNode : CollectableInfixOperator {
 
 struct CallNode : InnerNode {
 
-    std::string name;
+    Node *func;
 
-    CallNode(Context context, std::string name, std::vector<Node*> arguments)
-        : InnerNode(context, arguments), name(name) {}
+    CallNode(Context context, Node *func, std::vector<Node*> arguments)
+        : InnerNode(context, arguments), func(func) {}
 
-    void _compile(Target &target){
+    void compile(Target &target){
         for (size_t i = 0; i < children.size(); i++){
             children[i]->compile(target);
         }
-        target.CALL_N(name, children.size());
+        func->compile(target);
+        target.CALL_N(children.size());
+    }
+
+    ~CallNode(){
+        delete func;
     }
 };
 

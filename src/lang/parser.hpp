@@ -169,7 +169,7 @@ struct Parser {
         } else if (is(LEFT_BRACE)){
             node = parseBraced();
         } else if (is(ID)){
-            node = parseIDandCall();
+            node = parseID();
         } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
@@ -187,35 +187,36 @@ struct Parser {
         for (auto &pre : postfixOps){
             node = postfixOperators[pre->argument](pre->context, node);
         }
+        if (is(LEFT_BRACE)){
+            node = parseCall(node);
+        }
         return node;
     }
 
-    Node* parseIDandCall(){
+    Node* parseID(){
        Context con = context();
        Node *node = new PushVarNode(con, getArgument<std::string>());
        next();
        return node;
-     /*   std::string id = getArgument<std::string>();
-        next();
-        if (isNot(LEFT_BRACE)){
-            return new VariableNode(id);
-        }
-        next();
-        //std::cout << "|" << current()->str() << "\n";
+    }
+
+    Node* parseCall(Node *func){
+        Context con = func->context;
         std::vector<Node*> arguments;
-        while(isNot(RIGHT_BRACE)){
-            if (arguments.size() > 0){
-                if (is(COMMA)){
-                    next();
-                }
-            }
-            //std::cout << "||" << current()->str() << "\n";
+        next();
+        while (isNot(RIGHT_BRACE)){
             arguments.push_back(parseExpression());
-            //std::cout << "||>" << current()->str() << "\n";
+            if (is(COMMA)){
+                next();
+            } else if (isNot(RIGHT_BRACE)){
+                std::ostringstream stream;
+                stream << "Unexpected token " << current()->str();
+                stream << " expected comma instead";
+                error(stream.str());
+            }
         }
         next();
-        //std::cout << "|||" << current()->str() << "\n";
-        return new CallNode(id, arguments);*/
+        return new CallNode(con, func, arguments);
     }
 
     Node* parseInt(){
