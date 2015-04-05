@@ -96,16 +96,16 @@ struct Parser {
 
     Node* parseInfixOpExpression(Node* left, size_t minPrecedence){
         while (isInfixOp(current()) && infixOpPrecedence(current()) >= minPrecedence){
-            auto op = *current();
+            auto op = new ArgumentedToken<std::string>(TokenType::OPERATOR, current()->context, getArgument<std::string>(current()));
             next();
             auto *right = parseAtom();
             while (isInfixOp(current()) &&
-                   (infixOpPrecedence(current()) > infixOpPrecedence(&op)
-                    || (infixOpPrecedence(current()) == infixOpPrecedence(&op)
+                   (infixOpPrecedence(current()) > infixOpPrecedence(op)
+                    || (infixOpPrecedence(current()) == infixOpPrecedence(op)
                         && isRightAssocInfixOp(current()))) ){
                 right = parseInfixOpExpression(right, infixOpPrecedence(current()));
             }
-            left = createInfixOpNode(&op, left, right);
+            left = createInfixOpNode(op, left, right);
         }
         return left;
     }
@@ -187,10 +187,14 @@ struct Parser {
         for (auto &pre : postfixOps){
             node = postfixOperators[pre->argument](pre->context, node);
         }
-        return 0;
+        return node;
     }
 
     Node* parseIDandCall(){
+       Context con = context();
+       Node *node = new PushVarNode(con, getArgument<std::string>());
+       next();
+       return node;
      /*   std::string id = getArgument<std::string>();
         next();
         if (isNot(LEFT_BRACE)){
@@ -212,7 +216,6 @@ struct Parser {
         next();
         //std::cout << "|||" << current()->str() << "\n";
         return new CallNode(id, arguments);*/
-        return new Node(Context(0, 0));
     }
 
     Node* parseInt(){
@@ -303,7 +306,7 @@ struct Parser {
         std::ostringstream stream;
         stream << "Error in line " << lexer->lineNumber
                << ", around column " << lexer->columnNumber << ": " << msg << msg1;
-        std::cerr << stream.str() << "\n";
+        //std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 

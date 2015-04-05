@@ -27,10 +27,15 @@ void parse();
 
 int main(int argc, char *argv[]){
     if (argc == 2){
-        if (std::string(argv[1]) == "lex"){
-            lex();
-        } else if (std::string(argv[1]) == "parse"){
-            parse();
+        try {
+            if (std::string(argv[1]) == "lex"){
+                lex();
+            } else if (std::string(argv[1]) == "parse"){
+                parse();
+            }
+        } catch (std::string str){
+            std::cerr << str;
+            exit(1);
         }
         exit(0);
     }

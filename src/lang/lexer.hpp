@@ -75,7 +75,7 @@ struct Context {
 
     std::string str(){
         std::ostringstream stream;
-        stream << lineNumber;
+        stream << lineNumber << "." << columnNumber;
         return stream.str();
     }
 
@@ -94,7 +94,9 @@ struct Token {
     }
 
     virtual std::string str(){
-        return tokenTypeToString(type);
+        std::ostringstream stream;
+        stream << tokenTypeToString(type) << "(" << context.str() << ")";
+        return stream.str();
     }
 
     virtual ~Token() = default;
@@ -109,7 +111,7 @@ struct ArgumentedToken : Token {
     }
     std::string str(){
         std::ostringstream stream;
-        stream << tokenTypeToString(type) << "[" << argument << "]";
+        stream << Token::str() << "[" << argument << "]";
         return stream.str();
     }
 };
@@ -159,7 +161,7 @@ struct Lexer {
             next();
         }
         if (ended()){                    // end of stream
-            return token(TokenType::END);
+            return token(TokenType::END, context());
         }
         if (isLetter() || is('_')){
             return parseID();
@@ -170,37 +172,38 @@ struct Lexer {
         if (isSpecialChar()){
             return parseOperator();
         }
+        Context con = context();
         switch(currentChar){
             case ';':
             case '\n':
                 return parseLineBreak();
             case '(':
                 next();
-                return token(LEFT_BRACE);
+                return token(LEFT_BRACE, con);
             case ')':
                 next();
-                return token(RIGHT_BRACE);
+                return token(RIGHT_BRACE, con);
             case '{':
                 next();
-                return token(LEFT_CURLY_BRACKET);
+                return token(LEFT_CURLY_BRACKET, con);
             case '}':
                 next();
-                return token(RIGHT_CURLY_BRACKET);
+                return token(RIGHT_CURLY_BRACKET, con);
             case '[':
                 next();
-                return token(LEFT_ANGLE_BRACKET);
+                return token(LEFT_ANGLE_BRACKET, con);
             case ']':
                 next();
-                return token(RIGHT_ANGLE_BRACKET);
+                return token(RIGHT_ANGLE_BRACKET, con);
             case ',':
                 next();
-                return token(COMMA);
+                return token(COMMA, con);
             case ':':
                 next();
-                return token(COLON);
+                return token(COLON, con);
             case '.':
                 next();
-                return token(DOT);
+                return token(DOT, con);
             case '#':
                 omitRestOfLine();
                 return nextToken();
@@ -218,6 +221,7 @@ struct Lexer {
     }
 
     Token* parseID(){
+        Context con = context();
         std::ostringstream stream;
         stream << currentChar;
         next();
@@ -227,20 +231,21 @@ struct Lexer {
         }
         auto str = stream.str();
         if (str == std::string("nothing")){
-            return token(NOTHING);
+            return token(NOTHING, con);
         } else if (str == std::string("true")){
-            return token(BOOLEAN, true);
+            return token(BOOLEAN, con, true);
         } else if (str == std::string("false")){
-            return token(BOOLEAN, false);
+            return token(BOOLEAN, con, false);
         } else if (str == std::string("function")){
-            return token(FUNCTION);
+            return token(FUNCTION, con);
         } else if (str == std::string("var")){
-            return token(VAR);
+            return token(VAR, con);
         }
-        return token(ID, stream.str());
+        return token(ID, con, stream.str());
     }
 
     Token* parseString(char delimiter){
+        Context con = context();
         std::ostringstream stream;
         next();
         while (currentChar != delimiter){
@@ -259,7 +264,7 @@ struct Lexer {
         for (size_t i = 0; i < replacements.size(); i += 2){
             replaceAll(str, replacements[i], replacements[i + 1]);
         }
-        return token(STRING, str);
+        return token(STRING, con, str);
     }
 
     bool isFirstToken(){
@@ -267,6 +272,7 @@ struct Lexer {
     }
 
     Token* parseNumeric(){
+        Context con = context();
         std::stringstream stream;
         while (isDigit()){
             stream << currentChar;
@@ -281,36 +287,38 @@ struct Lexer {
             }
             float_type f;
             stream >> f;
-            return token(FLOAT, f);
+            return token(FLOAT, con, f);
         } else {
             int_type integer;
             stream >> integer;
-            return token(INT, integer);
+            return token(INT, con, integer);
         }
     }
 
     Token* parseLineBreak(){
+        Context con = context();
         next();
         if (is('\r')) next();
-        return token(TokenType::LINE_BREAK);
+        return token(TokenType::LINE_BREAK, con);
     }
 
     Token* parseOperator(){
+        Context con = context();
         std::ostringstream stream;
         while(isSpecialChar()){
             stream << currentChar;
             next();
         }
-        return token(OPERATOR, stream.str());
+        return token(OPERATOR, con, stream.str());
     }
 
-    Token* token(TokenType type){
-        return new Token(type, context());
+    Token* token(TokenType type, Context context){
+        return new Token(type, context);
     }
 
     template<typename T>
-    ArgumentedToken<T>* token(TokenType type, T argument){
-        return new ArgumentedToken<T>(type, context(), argument);
+    ArgumentedToken<T>* token(TokenType type, Context context, T argument){
+        return new ArgumentedToken<T>(type, context, argument);
     }
 
     bool is(char expected){
@@ -396,7 +404,7 @@ struct Lexer {
         std::ostringstream stream;
         stream << "Error in line " << context().str()
                << ", column " << columnNumber << ": " << msg << msg1;
-        std::cerr << stream.str() << "\n";
+        //std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 

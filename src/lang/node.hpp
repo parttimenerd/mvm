@@ -31,7 +31,7 @@ struct Node {
         return std::vector<Node*>();
     }
 
-    void compile(Target &target) {
+    virtual void compile(Target &target) {
         context.compile(target);
         _compile(target);
     }
@@ -94,7 +94,7 @@ struct CollectableInfixOperator : InfixOperator {
 
     using InfixOperator::InfixOperator;
 
-    void _compile(Target &target){
+    virtual void compile(Target &target){
         auto vec = collectSame();
         compile(target, vec);
     }
@@ -143,6 +143,7 @@ struct FuncInfixOperator : CollectableInfixOperator {
 
     virtual void compile(Target &target, std::vector<Node*> &children){
         compileNodes(target, children);
+        context.compile(target);
         target.CALL_N(funcName, children.size());
     }
 
@@ -162,6 +163,7 @@ struct AndNode : CollectableInfixOperator {
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
+        context.compile(target);
         for (size_t i = 0; i < children.size() - 1; i++){
             children[i]->compile(target);
             target.DUP();
@@ -186,6 +188,7 @@ struct OrNode : CollectableInfixOperator {
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
+        context.compile(target);
         for (size_t i = 0; i < children.size() - 1; i++){
             children[i]->compile(target);
             target.DUP();
@@ -213,6 +216,7 @@ struct ChainedLogicalNode : CollectableInfixOperator {
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t falseLabel = target.inventLabel();
+        context.compile(target);
         for (size_t i = 0; i < children.size() - 1; i++){
             children[i]->compile(target);
             children[i + 1]->compile(target);
@@ -251,7 +255,7 @@ struct BlockNode : InnerNode {
 
     using InnerNode::InnerNode;
 
-    void _compile(Target &target){
+    void compile(Target &target){
         for (auto *child : children){
             child->compile(target);
         }
