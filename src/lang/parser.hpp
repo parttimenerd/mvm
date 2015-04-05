@@ -72,7 +72,7 @@ struct Parser {
                 block.push_back(parseExpression());
             }
         }
-        return new BlockNode(block);
+        return new BlockNode(block.empty() ? Context(0, 0) : block.at(0)->context, block);
     }
 
     Node* parseExpression(){
@@ -181,7 +181,7 @@ struct Parser {
     }
 
     Node* parseIDandCall(){
-        std::string id = getArgument<std::string>();
+     /*   std::string id = getArgument<std::string>();
         next();
         if (isNot(LEFT_BRACE)){
             return new VariableNode(id);
@@ -201,35 +201,36 @@ struct Parser {
         }
         next();
         //std::cout << "|||" << current()->str() << "\n";
-        return new CallNode(id, arguments);
+        return new CallNode(id, arguments);*/
+        return new Node(Context(0, 0));
     }
 
     Node* parseInt(){
-        Node *ret = new IntNode(getArgument<int_type>());
+        Node *ret = new IntNode(context(), getArgument<int_type>());
         next();
         return ret;
     }
 
     Node* parseFloat(){
-        Node *ret = new FloatNode(getArgument<float_type>());
+        Node *ret = new FloatNode(context(), getArgument<float_type>());
         next();
         return ret;
     }
 
     Node* parseString(){
-        Node *ret = new StringNode(getArgument<std::string>());
+        Node *ret = new StringNode(context(), getArgument<std::string>());
         next();
         return ret;
     }
 
     Node* parseBoolean(){
-        Node *ret = new BooleanNode(getArgument<bool>());
+        Node *ret = new BooleanNode(context(), getArgument<bool>());
         next();
         return ret;
     }
 
     Node* parseNothing(){
-        Node *ret = new NothingNode();
+        Node *ret = new NothingNode(context());
         next();
         return ret;
     }
@@ -278,6 +279,10 @@ struct Parser {
 
     Token* current(){
         return lexer->lastToken;
+    }
+
+    Context context(){
+        return current()->context;
     }
 
     bool ended(){

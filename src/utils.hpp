@@ -12,6 +12,7 @@
 #include <functional>
 #include <tuple>
 
+using namespace std::string_literals;
 
 /** Type of a normal id in the following */
 typedef uint64_t id_type;

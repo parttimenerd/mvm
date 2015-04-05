@@ -2,6 +2,7 @@
 
 #include "../utils.hpp"
 #include <cctype>
+#include "target.hpp"
 
 /*void replaceAll(std::string& str, const std::string& from, const std::string& to) {
     if(from.empty()){
@@ -67,15 +68,19 @@ std::string tokenTypeToString(TokenType type){
 
 struct Context {
     size_t lineNumber;
+    size_t columnNumber;
 
-    Context(size_t lineNumber){
-        this->lineNumber = lineNumber;
-    }
+    Context(size_t lineNumber, size_t columnNumber)
+        : lineNumber(lineNumber), columnNumber(columnNumber) {}
 
     std::string str(){
         std::ostringstream stream;
         stream << lineNumber;
         return stream.str();
+    }
+
+    void compile(Target &target){
+        target.LINE_COLUMN_NUMBER(lineNumber, columnNumber);
     }
 };
 
@@ -366,7 +371,7 @@ struct Lexer {
     }
 
     Context context(){
-        return Context(lineNumber);
+        return Context(lineNumber, columnNumber);
     }
 
     template<typename T>

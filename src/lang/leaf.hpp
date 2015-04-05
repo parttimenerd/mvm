@@ -9,7 +9,7 @@ template<typename T>
 struct Leaf : Node {
     T value;
 
-    Leaf(T value): value(value) {}
+    Leaf(Context context, T value): Node(context), value(value) {}
 
     std::string str(){
         std::ostringstream stream;
@@ -25,7 +25,7 @@ struct Leaf : Node {
 struct IntNode : Leaf<int_type> {
     using Leaf::Leaf;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         target.PUSH_INT(value);
     }
 };
@@ -33,7 +33,7 @@ struct IntNode : Leaf<int_type> {
 struct FloatNode : Leaf<float_type> {
     using Leaf::Leaf;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         target.PUSH_FLOAT(value);
     }
 };
@@ -41,7 +41,7 @@ struct FloatNode : Leaf<float_type> {
 struct StringNode : Leaf<std::string> {
     using Leaf::Leaf;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         target.PUSH_STRING(value);
     }
 };
@@ -49,7 +49,7 @@ struct StringNode : Leaf<std::string> {
 struct VariableNode : Leaf<std::string> {
     using Leaf::Leaf;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         target.PUSH_VAR(value);
     }
 };
@@ -57,7 +57,7 @@ struct VariableNode : Leaf<std::string> {
 struct BooleanNode : Leaf<bool> {
     using Leaf::Leaf;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         target.PUSH_BOOLEAN(value);
     }
 };
@@ -65,7 +65,9 @@ struct BooleanNode : Leaf<bool> {
 struct NothingNode : Node {
     bool isLeaf = true;
 
-    void compile(Target &target){
+    using Node::Node;
+
+    void _compile(Target &target){
         target.PUSH_NOTHING();
     }
 

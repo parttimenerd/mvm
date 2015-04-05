@@ -102,6 +102,10 @@ struct Target {
     virtual void DUP(){
         std::cout << "DUP\n";
     }
+
+    virtual void LINE_COLUMN_NUMBER(size_t lineNumber, size_t columnNumber){
+        std::cout << "LINE_COLUMN_NUMBER " << lineNumber << " " << columnNumber << "\n";
+    }
 };
 
 }

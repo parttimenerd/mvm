@@ -23,11 +23,20 @@ enum NodeType {
  */
 struct Node {
 
+    Context context;
+
+    Node(Context context) : context(context) {}
+
     virtual std::vector<Node*> getChildren(){
         return std::vector<Node*>();
     }
 
-    virtual void compile(Target&) {}
+    void compile(Target &target) {
+        context.compile(target);
+        _compile(target);
+    }
+
+    virtual void _compile(Target&){}
 
     virtual std::string str(){
         return "";
@@ -41,7 +50,8 @@ struct Node {
 struct InnerNode : Node {
     std::vector<Node*> children;
 
-    InnerNode(std::vector<Node*> children) : children(children) {}
+    InnerNode(Context context, std::vector<Node*> children)
+        : Node(context), children(children) {}
 
     std::vector<Node*> getChildren(){
         return children;
@@ -52,8 +62,8 @@ struct InfixOperator : Node {
     Node* left;
     Node* right;
 
-    InfixOperator(Node* left, Node* right)
-        : left(left), right(right) {}
+    InfixOperator(Context context, Node* left, Node* right)
+        : Node(context), left(left), right(right) {}
 
     std::vector<Node*> getChildren() {
         return {left, right};
@@ -73,7 +83,7 @@ struct CollectableInfixOperator : InfixOperator {
 
     using InfixOperator::InfixOperator;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         auto vec = collectSame();
         compile(target, vec);
     }
@@ -117,8 +127,8 @@ struct FuncInfixOperator : CollectableInfixOperator {
 
     std::string funcName;
 
-    FuncInfixOperator(Node* left, Node* right, std::string &funcName)
-        : CollectableInfixOperator(left, right), funcName(funcName) {}
+    FuncInfixOperator(Context context, Node* left, Node* right, std::string &funcName)
+        : CollectableInfixOperator(context, left, right), funcName(funcName) {}
 
     virtual void compile(Target &target, std::vector<Node*> &children){
         compileNodes(target, children);
@@ -187,8 +197,8 @@ struct ChainedLogicalNode : CollectableInfixOperator {
 
     std::string funcName;
 
-    ChainedLogicalNode(Node* left, Node* right, std::string &funcName)
-            : CollectableInfixOperator(left, right), funcName(funcName) {}
+    ChainedLogicalNode(Context context, Node* left, Node* right, std::string &funcName)
+            : CollectableInfixOperator(context, left, right), funcName(funcName) {}
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t falseLabel = target.inventLabel();
@@ -215,9 +225,10 @@ struct CallNode : InnerNode {
 
     std::string name;
 
-    CallNode(std::string name, std::vector<Node*> arguments) : InnerNode(arguments), name(name) {}
+    CallNode(Context context, std::string name, std::vector<Node*> arguments)
+        : InnerNode(context, arguments), name(name) {}
 
-    void compile(Target &target){
+    void _compile(Target &target){
         for (size_t i = 0; i < children.size(); i++){
             children[i]->compile(target);
         }
@@ -229,7 +240,7 @@ struct BlockNode : InnerNode {
 
     using InnerNode::InnerNode;
 
-    void compile(Target &target){
+    void _compile(Target &target){
         for (auto *child : children){
             child->compile(target);
         }

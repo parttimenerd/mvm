@@ -195,7 +195,9 @@ struct Interpreter {
 
     void error(std::string msg, std::string msg1 = ""){
         std::ostringstream stream;
-        stream << "Error in line " << currentPos << ": " << msg << msg1;
+        stream << "Error in line " << currentPos
+               << "[" << currentLine()->context.str()
+               << "]: " << msg << msg1;
         std::cerr << stream.str() << "\n";
         throw stream.str();
     }
