@@ -16,7 +16,7 @@ enum Associativity {
  */
 struct Parser {
 
-    typedef std::tuple<size_t, Associativity, std::function<Node*(Node*, Node*)>> binOp;
+    typedef std::tuple<size_t, Associativity, std::function<Node*(Node*, Node*)>> infixOp;
 
     /**
      * Contains tuples (priority/precedence, associativity, function to create a node) for
@@ -24,7 +24,7 @@ struct Parser {
      *
      * @see https://en.wikipedia.org/wiki/Order_of_operations
      */
-    std::unordered_map<std::string, binOp>  binaryOperators = {
+    std::unordered_map<std::string, infixOp>  infixOperators; /*= {
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Node* l, Node* r){ return new OrNode(l, r); })},
         {"&&", std::make_tuple(40, LEFT_ASSOC, [](Node* l, Node* r){ return new AndNode(l, r); })},
         {"!=", std::make_tuple(41, LEFT_ASSOC, [](Node* l, Node* r){ return new NotEqualNode(l, r); })},
@@ -38,7 +38,17 @@ struct Parser {
         {"*", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new MulNode(l, r); })},
         {"/", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new DivNode(l, r); })},
         {"%", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new ModNode(l, r); })}
-    };
+    }*/
+
+    typedef std::function<Node*(Node*)> unaryOp;
+
+    std::unordered_map<std::string, unaryOp>  prefixOperators /*= {
+        //{"!", [](Node* l, Node* r){ return new OrNode(l, r); }}
+    }*/;
+
+    std::unordered_map<std::string, unaryOp>  postfixOperators /*= {
+        //{"!", [](Node* l, Node* r){ return new OrNode(l, r); }}
+    }*/;
 
     Lexer *lexer;
 
@@ -66,70 +76,106 @@ struct Parser {
     }
 
     Node* parseExpression(){
-        return parseBinOpExpression();
+        return parseInfixOpExpression();
     }
 
-    Node* parseBinOpExpression(){
+    Node* parseInfixOpExpression(){
         Node* first = parseAtom();
-        return parseBinOpExpression(first, 0);
+        return parseInfixOpExpression(first, 0);
     }
 
-    Node* parseBinOpExpression(Node* left, size_t minPrecedence){
-        while (isBinOp(current()) && binOpPrecedence(current()) >= minPrecedence){
+    Node* parseInfixOpExpression(Node* left, size_t minPrecedence){
+        while (isInfixOp(current()) && infixOpPrecedence(current()) >= minPrecedence){
             auto op = *current();
             next();
             auto *right = parseAtom();
-            while (isBinOp(current()) &&
-                   (binOpPrecedence(current()) > binOpPrecedence(&op)
-                    || (binOpPrecedence(current()) == binOpPrecedence(&op)
-                        && isRightAssocBinOp(current()))) ){
-                right = parseBinOpExpression(right, binOpPrecedence(current()));
+            while (isInfixOp(current()) &&
+                   (infixOpPrecedence(current()) > infixOpPrecedence(&op)
+                    || (infixOpPrecedence(current()) == infixOpPrecedence(&op)
+                        && isRightAssocInfixOp(current()))) ){
+                right = parseInfixOpExpression(right, infixOpPrecedence(current()));
             }
-            left = createBinOpNode(&op, left, right);
+            left = createInfixOpNode(&op, left, right);
         }
         return left;
     }
 
-    bool isRightAssocBinOp(Token *op){
-        return isBinOp(op) && std::get<1>(getBinOp(op)) == Associativity::RIGHT_ASSOC;
+    bool isRightAssocInfixOp(Token *op){
+        return isInfixOp(op) && std::get<1>(getInfixOp(op)) == Associativity::RIGHT_ASSOC;
     }
 
-    Node* createBinOpNode(Token *op, Node* left, Node* right){
-        return std::get<2>(getBinOp(op))(left, right);
+    Node* createInfixOpNode(Token *op, Node* left, Node* right){
+        return std::get<2>(getInfixOp(op))(left, right);
     }
 
-    size_t binOpPrecedence(Token *op){
-         return std::get<0>(getBinOp(op));
+    size_t infixOpPrecedence(Token *op){
+         return std::get<0>(getInfixOp(op));
     }
 
-    binOp getBinOp(Token *op){
-        return binaryOperators[tokenTypeToString(op->type)];
+    infixOp getInfixOp(Token *op){
+        return infixOperators[getArgument<std::string>(op)];
     }
 
-    bool isBinOp(Token *op){
-        std::string key = tokenTypeToString(op->type);
-        return binaryOperators.find(key) != binaryOperators.end();
+    bool isInfixOp(Token *op){
+        if (op->type == OPERATOR){
+            std::string key = getArgument<std::string>(op);
+            return infixOperators.find(key) != infixOperators.end();
+        }
+        return false;
+    }
+
+    bool isPrefixOperator(Token *op){
+        if (op->type == OPERATOR){
+            std::string key = getArgument<std::string>(op);
+            return prefixOperators.find(key) != prefixOperators.end();
+        }
+        return false;
+    }
+
+    bool isPostfixOperator(Token *op){
+        if (op->type == OPERATOR){
+            std::string key = getArgument<std::string>(op);
+            return postfixOperators.find(key) != postfixOperators.end();
+        }
+        return false;
     }
 
 
     Node* parseAtom(){
+        std::vector<std::string> prefixOps;
+        while (isPrefixOperator(current())){
+            prefixOps.push_back(getArgument<std::string>());
+            next();
+        }
+        Node *node;
         if (is(INT)){
-            return parseInt();
+            node = parseInt();
         } else if (is(BOOLEAN)){
-            return parseBoolean();
+            node = parseBoolean();
         } else if (is(STRING)){
-            return parseString();
+            node = parseString();
         } else if (is(NOTHING)){
-            return parseNothing();
+            node = parseNothing();
         } else if (is(LEFT_BRACE)){
-            return parseBraced();
+            node = parseBraced();
         } else if (is(ID)){
-            return parseIDandCall();
+            node = parseIDandCall();
         } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
             stream << " expected atom expression instead";
             error(stream.str());
+        }
+        std::vector<std::string> postfixOps;
+        while (isPostfixOperator(current())){
+            postfixOps.push_back(getArgument<std::string>());
+            next();
+        }
+        for (auto &pre : prefixOps){
+            node = prefixOperators[pre](node);
+        }
+        for (auto &pre : postfixOps){
+            node = postfixOperators[pre](node);
         }
         return 0;
     }
@@ -160,6 +206,12 @@ struct Parser {
 
     Node* parseInt(){
         Node *ret = new IntNode(getArgument<int_type>());
+        next();
+        return ret;
+    }
+
+    Node* parseFloat(){
+        Node *ret = new FloatNode(getArgument<float_type>());
         next();
         return ret;
     }
@@ -211,6 +263,11 @@ struct Parser {
     template<typename T>
     T getArgument(){
         return static_cast<ArgumentedToken<T>*>(current())->argument;
+    }
+
+    template<typename T>
+    T getArgument(Token *token){
+        return static_cast<ArgumentedToken<T>*>(token)->argument;
     }
 
     Token* next(){

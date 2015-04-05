@@ -21,39 +21,21 @@ enum TokenType {
     INT,
     FLOAT,
     STRING,
-    EQUAL_SIGN,
-    DOUBLE_EQUAL_SIGN,
     LEFT_BRACE,
     RIGHT_BRACE,
     LEFT_CURLY_BRACKET,
     RIGHT_CURLY_BRACKET,
     LEFT_ANGLE_BRACKET,
     RIGHT_ANGLE_BRACKET,
+    OPERATOR,
     COMMA,
     COLON,
-    PLUS,
-    LEFT_DOUBLE_PLUS,
-    RIGHT_DOUBLE_PLUS,
-    MINUS,
-    LEFT_DOUBLE_MINUS,
-    RIGHT_DOUBLE_MINUS,
-    DIVIDE_SIGN,
-    MULTIPLY_SIGN,
-    MOD_SIGN,
-    NEGATE,
-    NOT,
-    NOT_EQUAL,
-    LOWER_EQUAL,
-    GREATER_EQUAL,
-    LOWER,
-    GREATER,
-    AND,
-    OR,
     END,
     BOOLEAN,
     NOTHING,
     VAR,
     FUNCTION,
+    DOT,
     LINE_BREAK /** Line break or semi colon */
 };
 
@@ -62,8 +44,6 @@ std::string tokenTypeToString(TokenType type){
         case ID: return "ID";
         case LINE_BREAK: return "LINE_BREAK";
         case END: return "END";
-        case EQUAL_SIGN: return "=";
-        case DOUBLE_EQUAL_SIGN: return "==";
         case LEFT_BRACE: return "(";
         case RIGHT_BRACE: return ")";
         case LEFT_CURLY_BRACKET: return "{";
@@ -74,29 +54,13 @@ std::string tokenTypeToString(TokenType type){
         case COLON: return ":";
         case INT: return "INT";
         case FLOAT: return "FLOAT";
-        case DIVIDE_SIGN: return "/";
-        case MULTIPLY_SIGN: return "*";
-        case MOD_SIGN: return "%";
-        case PLUS: return "+";
-        case MINUS: return "-";
         case STRING: return "STRING";
-        case LEFT_DOUBLE_MINUS: return "--b";
-        case LEFT_DOUBLE_PLUS: return "++b";
-        case RIGHT_DOUBLE_MINUS: return "b--";
-        case RIGHT_DOUBLE_PLUS: return "b++";
-        case NEGATE: return "NEGATE";
-        case NOT: return "!";
-        case NOT_EQUAL: return "!=";
-        case LOWER_EQUAL: return "<=";
-        case GREATER_EQUAL: return ">=";
-        case LOWER: return "<";
-        case GREATER: return ">";
-        case AND: return "&&";
-        case OR: return "||";
         case BOOLEAN: return "BOOLEAN";
         case NOTHING: return "nothing";
         case VAR: return "var";
         case FUNCTION: return "function";
+        case OPERATOR: return "op";
+        case DOT: return ".";
     }
     return "[unknown token]";
 }
@@ -157,7 +121,6 @@ struct Lexer {
     size_t lineNumber = 1;
     size_t columnNumber = 0;
     Token *lastToken = 0;
-    bool wsAfterLastToken = false;
 
     Lexer(std::istream *input){
         this->input = input;
@@ -183,30 +146,29 @@ struct Lexer {
             delete lastToken;
         }
         lastToken = _nextToken();
-        wsAfterLastToken = false;
         return lastToken;
     }
 
     Token* _nextToken(){
         while (isWhiteSpace()){          // omit whitespace
             next();
-            wsAfterLastToken = true;
         }
         if (ended()){                    // end of stream
             return token(TokenType::END);
         }
-        if (isLetter() || is('_') || is('$') || is('@')){
+        if (isLetter() || is('_')){
             return parseID();
         }
-        if (isDigit() || isSign()){
-            return parseNumericAndSign();
+        if (isDigit()){
+            return parseNumeric();
+        }
+        if (isSpecialChar()){
+            return parseOperator();
         }
         switch(currentChar){
             case ';':
             case '\n':
                 return parseLineBreak();
-            case '=':
-                return parseEqualSigns();
             case '(':
                 next();
                 return token(LEFT_BRACE);
@@ -231,62 +193,15 @@ struct Lexer {
             case ':':
                 next();
                 return token(COLON);
-            case '<':
+            case '.':
                 next();
-                if (is('=')){
-                    next();
-                    return token(LOWER_EQUAL);
-                } else {
-                    return token(LOWER);
-                }
-            case '>':
-                next();
-                if (is('=')){
-                    next();
-                    return token(GREATER_EQUAL);
-                } else {
-                    return token(GREATER);
-                }
-            case '/':
-                next();
-                if (is('/')){
-                    omitRestOfLine(); // omit comments
-                    return nextToken();
-                }
-                return token(DIVIDE_SIGN);
+                return token(DOT);
             case '#':
                 omitRestOfLine();
                 return nextToken();
-            case '*':
-                next();
-                return token(MULTIPLY_SIGN);
-            case '%':
-                next();
-                return token(MOD_SIGN);
             case '"':
             case '\'':
                 return parseString(currentChar);
-            case '!':
-                next();
-                if (is('=')){
-                    next();
-                    return token(NOT_EQUAL);
-                }
-                return token(NOT);
-            case '|':
-                next();
-                if (is('|')){
-                    next();
-                    return token(OR);
-                }
-                error("Don't know what to do with char ", currentChar);
-            case '&':
-                next();
-                if (is('&')){
-                    next();
-                    return token(AND);
-                }
-                error("Don't know what to do with char ", currentChar);
             default:
                 error("Don't know what to do with char ", currentChar);
         }
@@ -301,7 +216,7 @@ struct Lexer {
         std::ostringstream stream;
         stream << currentChar;
         next();
-        while (isAlphaNumeric() || is('_') || is('$') || is('?') || is('@')){
+        while (isAlphaNumeric() || is('_') || is('$') || is('?') || is('!')){
             stream << currentChar;
             next();
         }
@@ -342,73 +257,31 @@ struct Lexer {
         return token(STRING, str);
     }
 
-    bool lastTokenWasExpression(){
-        auto t = lastToken->type;
-        return t == ID || t == RIGHT_BRACE || t == RIGHT_ANGLE_BRACKET ||
-               t == INT || t == FLOAT || t == STRING;
-    }
-
     bool isFirstToken(){
         return lastToken == 0;
     }
 
-    Token* parseNumericAndSign(){
-        bool minus = false;
-        if (is('-')){
-            if (!isFirstToken() && lastTokenWasExpression()){ //e.g. a - b
-                next();
-                if (is('-') && !wsAfterLastToken){ //e.g. a-- b
-                    next();
-                    return token(RIGHT_DOUBLE_MINUS);
-                } else {
-                    return token(MINUS); // the '-' seems to be a 'real' subtraction sign
-                }
-            } else {
-                next();
-                if (is('-')){ //e.g. a, -- b
-                    next();
-                    return token(LEFT_DOUBLE_MINUS);
-                }
-                minus = true;
-            }
-        } else if (is('+')){
-            if (!isFirstToken() && lastTokenWasExpression()){ //e.g. a + b
-                next();
-                if (is('+') && !wsAfterLastToken){ //e.g. a ++ b
-                    next();
-                    return token(RIGHT_DOUBLE_PLUS);
-                } else {
-                    return token(PLUS);
-                }
-            } else { //e.g. a, +b
-                next();
-                if (is('+')){ //e.g. a, ++b
-                    next();
-                    if (!isWhiteSpace()){
-                        return token(LEFT_DOUBLE_PLUS);
-                    } else {
-                        error("Didn't expect whitespace here, expected start of expression");
-                    }
-                } else {
-                    return token(PLUS);
-                }
-            }
-        }
-        if (!isDigit()){
-            return token(NEGATE);
-        }
-        int_type res = 0;
+    Token* parseNumeric(){
+        std::stringstream stream;
         while (isDigit()){
-            res = res * 10 + currentChar - '0';
+            stream << currentChar;
             next();
         }
-        if (minus){
-            res = -res;
-        }
         if (is('.')){
-            error("Floats are currently not supported");
+            stream << '.';
+            next();
+            while (isDigit()){
+                stream << currentChar;
+                next();
+            }
+            float_type f;
+            stream >> f;
+            return token(FLOAT, f);
+        } else {
+            int_type integer;
+            stream >> integer;
+            return token(INT, integer);
         }
-        return token(INT, res);
     }
 
     Token* parseLineBreak(){
@@ -417,13 +290,13 @@ struct Lexer {
         return token(TokenType::LINE_BREAK);
     }
 
-    Token* parseEqualSigns(){
-        next();
-        if (is('=')){
+    Token* parseOperator(){
+        std::ostringstream stream;
+        while(isSpecialChar()){
+            stream << currentChar;
             next();
-            return token(DOUBLE_EQUAL_SIGN);
         }
-        return token(EQUAL_SIGN);
+        return token(OPERATOR, stream.str());
     }
 
     Token* token(TokenType type){
@@ -437,6 +310,11 @@ struct Lexer {
 
     bool is(char expected){
         return expected == currentChar;
+    }
+
+    bool is(std::vector<char> expectable){
+        return std::find(expectable.begin(), expectable.end(),
+                         currentChar) != expectable.end();
     }
 
     bool isNot(char expected){
@@ -475,6 +353,12 @@ struct Lexer {
 
     bool isSign(){
         return is('+') || is('-');
+    }
+
+    bool isSpecialChar(){
+        return is({'<', '>', '|', '-', '+', '~', '*', '`',
+                   '?', '\\', '=', '/', '&', '%', '$',
+                   '!', '^'});
     }
 
     bool ended(){

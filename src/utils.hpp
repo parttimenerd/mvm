@@ -18,3 +18,4 @@ typedef uint64_t id_type;
 /** Type of the value of an Int object */
 typedef int64_t int_type;
 
+typedef double float_type;

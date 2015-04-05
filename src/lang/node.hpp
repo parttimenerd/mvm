@@ -48,11 +48,12 @@ struct InnerNode : Node {
     }
 };
 
-struct BinaryOperator : Node {
+struct InfixOperator : Node {
     Node* left;
     Node* right;
 
-    BinaryOperator(Node* left, Node* right) : left(left), right(right) {}
+    InfixOperator(Node* left, Node* right)
+        : left(left), right(right) {}
 
     std::vector<Node*> getChildren() {
         return {left, right};
@@ -62,25 +63,22 @@ struct BinaryOperator : Node {
         return BINARY;
     }
 
-    virtual TokenType op() = 0;
-
     virtual std::string str(){
-        return std::string("{") + tokenTypeToString(op())
-                + std::string("}(") + left->str() + right->str()
+        return std::string("(") + left->str() + right->str()
                 + std::string(")");
     }
 };
 
-struct BinaryCollectableOperator : BinaryOperator {
+struct CollectableInfixOperator : InfixOperator {
 
-    using BinaryOperator::BinaryOperator;
+    using InfixOperator::InfixOperator;
 
     void compile(Target &target){
         auto vec = collectSame();
-        return compile(target, vec);
+        compile(target, vec);
     }
 
-    virtual void compile(Target&, std::vector<Node*>&) {}
+    virtual void compile(Target &target, std::vector<Node*> &children);
 
     void compileNodes(Target &target, std::vector<Node*> &children){
         for (auto *child : children){
@@ -89,7 +87,11 @@ struct BinaryCollectableOperator : BinaryOperator {
     }
 
     bool isSame(Node* node){
-        return node->type() == type() && static_cast<BinaryCollectableOperator*>(node)->op() == op();
+        return node->type() == type() && static_cast<CollectableInfixOperator*>(node)->op() == op();
+    }
+
+    virtual std::string op(){
+        return "";
     }
 
     std::vector<Node*> collectSame(){
@@ -101,7 +103,7 @@ struct BinaryCollectableOperator : BinaryOperator {
 
     std::vector<Node*> collectSame(Node* node){
         if (isSame(node)){
-            return static_cast<BinaryCollectableOperator*>(left)->collectSame();
+            return static_cast<CollectableInfixOperator*>(left)->collectSame();
         }
         return {node};
     }
@@ -111,80 +113,31 @@ struct BinaryCollectableOperator : BinaryOperator {
     }
 };
 
-struct AddNode : BinaryCollectableOperator {
+struct FuncInfixOperator : CollectableInfixOperator {
 
-    using BinaryCollectableOperator::BinaryCollectableOperator;
+    std::string funcName;
 
-    void compile(Target &target, std::vector<Node*> &children){
+    FuncInfixOperator(Node* left, Node* right, std::string &funcName)
+        : CollectableInfixOperator(left, right), funcName(funcName) {}
+
+    virtual void compile(Target &target, std::vector<Node*> &children){
         compileNodes(target, children);
-        target.CALL_N("add", children.size());
+        target.CALL_N(funcName, children.size());
     }
 
-    TokenType op(){
-        return PLUS;
-    }
-};
-
-struct SubNode : BinaryCollectableOperator {
-
-    using BinaryCollectableOperator::BinaryCollectableOperator;
-
-    void compile(Target &target, std::vector<Node*> &children){
-        compileNodes(target, children);
-        target.CALL_N("plus", children.size());
+    std::string op(){
+        return funcName;
     }
 
-    TokenType op(){
-        return MINUS;
+    std::string str(){
+         return std::string("{") + funcName + std::string("}") + CollectableInfixOperator::str();
     }
 };
 
-struct MulNode : BinaryCollectableOperator {
 
-    using BinaryCollectableOperator::BinaryCollectableOperator;
+struct AndNode : CollectableInfixOperator {
 
-    void compile(Target &target, std::vector<Node*> &children){
-        compileNodes(target, children);
-        target.CALL_N("mul", children.size());
-    }
-
-    TokenType op(){
-        return MULTIPLY_SIGN;
-    }
-};
-
-struct DivNode : BinaryCollectableOperator {
-
-    using BinaryCollectableOperator::BinaryCollectableOperator;
-
-    void compile(Target &target, std::vector<Node*> &children){
-        compileNodes(target, children);
-        target.CALL_N("div", children.size());
-    }
-
-    TokenType op(){
-        return DIVIDE_SIGN;
-    }
-};
-
-struct ModNode : BinaryOperator {
-
-    using BinaryOperator::BinaryOperator;
-
-    void compile(Target &target){
-        left->compile(target);
-        right->compile(target);
-        target.CALL_N("mod", 2);
-    }
-
-    TokenType op(){
-        return MOD_SIGN;
-    }
-};
-
-struct AndNode : BinaryCollectableOperator {
-
-    using BinaryCollectableOperator::BinaryCollectableOperator;
+    using CollectableInfixOperator::CollectableInfixOperator;
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
@@ -197,14 +150,18 @@ struct AndNode : BinaryCollectableOperator {
         target.placeLabel(endLabel);
     }
 
-    TokenType op(){
-        return AND;
+    std::string op(){
+        return "AND";
+    }
+
+    std::string str(){
+        return std::string("{AND}") + CollectableInfixOperator::str();
     }
 };
 
-struct OrNode : BinaryCollectableOperator {
+struct OrNode : CollectableInfixOperator {
 
-    using BinaryCollectableOperator::BinaryCollectableOperator;
+    using CollectableInfixOperator::CollectableInfixOperator;
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t endLabel = target.inventLabel();
@@ -217,21 +174,28 @@ struct OrNode : BinaryCollectableOperator {
         target.placeLabel(endLabel);
     }
 
-    TokenType op(){
-        return OR;
+    std::string op(){
+        return "OR";
+    }
+
+    std::string str(){
+        return std::string("{OR}") + CollectableInfixOperator::str();
     }
 };
 
-struct ChainedLogicalNode : BinaryCollectableOperator {
+struct ChainedLogicalNode : CollectableInfixOperator {
 
-    using BinaryCollectableOperator::BinaryCollectableOperator;
+    std::string funcName;
+
+    ChainedLogicalNode(Node* left, Node* right, std::string &funcName)
+            : CollectableInfixOperator(left, right), funcName(funcName) {}
 
     void compile(Target &target, std::vector<Node*> &children){
         size_t falseLabel = target.inventLabel();
         for (size_t i = 0; i < children.size() - 1; i++){
             children[i]->compile(target);
             children[i + 1]->compile(target);
-            target.CALL_N(methodName(), 2);
+            target.CALL_N(funcName, 2);
             target.JUMP_IF_NOT(falseLabel);
         }
         size_t endLabel = target.inventLabel();
@@ -242,93 +206,15 @@ struct ChainedLogicalNode : BinaryCollectableOperator {
         target.placeLabel(endLabel);
     }
 
-    virtual std::string methodName(){
-        return "";
-    }
-
-};
-
-struct LowerNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "lower";
-    }
-
-    TokenType op(){
-        return LOWER;
-    }
-};
-
-struct LowerEqualNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "leq";
-    }
-
-    TokenType op(){
-        return LOWER_EQUAL;
-    }
-};
-
-struct GreaterNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "greater";
-    }
-
-    TokenType op(){
-        return GREATER;
-    }
-};
-
-struct GreaterEqualNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "geq";
-    }
-
-    TokenType op(){
-        return GREATER_EQUAL;
-    }
-};
-
-struct EqualNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "eq";
-    }
-
-    TokenType op(){
-        return DOUBLE_EQUAL_SIGN;
-    }
-};
-
-struct NotEqualNode : ChainedLogicalNode {
-
-    using ChainedLogicalNode::ChainedLogicalNode;
-
-    std::string methodName(){
-        return "neq";
-    }
-
-    TokenType op(){
-        return NOT_EQUAL;
+    std::string op(){
+        return funcName;
     }
 };
 
 struct CallNode : InnerNode {
 
     std::string name;
+
     CallNode(std::string name, std::vector<Node*> arguments) : InnerNode(arguments), name(name) {}
 
     void compile(Target &target){

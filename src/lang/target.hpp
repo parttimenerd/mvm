@@ -16,6 +16,10 @@ struct Target {
         std::cout << "PUSH_INT " << value << "\n";
     }
 
+    virtual void PUSH_FLOAT(float_type value){
+        std::cout << "PUSH_FLOAT " << value << "\n";
+    }
+
     virtual void PUSH_STRING(std::string value){
         std::cout << "PUSH_STRING " << escape(value) << "\n";
     }

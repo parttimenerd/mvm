@@ -30,6 +30,14 @@ struct IntNode : Leaf<int_type> {
     }
 };
 
+struct FloatNode : Leaf<float_type> {
+    using Leaf::Leaf;
+
+    void compile(Target &target){
+        target.PUSH_FLOAT(value);
+    }
+};
+
 struct StringNode : Leaf<std::string> {
     using Leaf::Leaf;
 
