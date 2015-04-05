@@ -327,4 +327,31 @@ struct PushVarNode : UnaryInstructionNode<std::string> {
         target.PUSH_VAR(value);
     }
 };
+
+struct VarAccessViaDotOperator : UnaryOperator {
+
+    std::string varName;
+
+    VarAccessViaDotOperator(Context context, Node *child, std::string varName)
+        : UnaryOperator(context, child), varName(varName) {}
+
+    void compile(Target &target){
+        child->compile(target);
+        target.PUSH_STRING(varName);
+        target.CALL_N("get", 2);
+    }
+};
+
+struct VarAccessViaBracketOperator : InfixOperator {
+
+    using InfixOperator::InfixOperator;
+
+    void compile(Target &target){
+        left->compile(target);
+        right->compile(target);
+        target.CALL_N("get", 2);
+    }
+};
+
+
 }

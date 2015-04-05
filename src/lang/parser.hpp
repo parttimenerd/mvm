@@ -172,7 +172,7 @@ struct Parser {
             node = parseID();
         } else if (is(VAR)){
             node = parseVar();
-        } else {
+        }  else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
             stream << " expected atom expression instead";
@@ -191,6 +191,10 @@ struct Parser {
         }
         if (is(LEFT_BRACE)){
             node = parseCall(node);
+        } else if (is(DOT)){
+            node = parseVarAccessViaDot(node);
+        } else if (is(LEFT_ANGLE_BRACKET)){
+            node = parseVarAccessViaBrackets(node);
         }
         return node;
     }
@@ -210,11 +214,8 @@ struct Parser {
             arguments.push_back(parseExpression());
             if (is(COMMA)){
                 next();
-            } else if (isNot(RIGHT_BRACE)){
-                std::ostringstream stream;
-                stream << "Unexpected token " << current()->str();
-                stream << " expected comma instead";
-                error(stream.str());
+            } else {
+                parse(RIGHT_BRACE);
             }
         }
         next();
@@ -224,15 +225,27 @@ struct Parser {
     Node* parseVar(){
         Context con = context();
         next();
-        if (isNot(ID)){
-            std::ostringstream stream;
-            stream << "Unexpected token " << current()->str();
-            stream << " expected id instead";
-            error(stream.str());
-        }
+        parse(ID, false);
         std::string name = getArgument<std::string>();
         next();
         return new InitVarNode(con, name);
+    }
+
+    Node* parseVarAccessViaDot(Node *map){
+        Context con = context();
+        next();
+        parse(ID, false);
+        std::string name = getArgument<std::string>();
+        next();
+        return new VarAccessViaDotOperator(con, map, name);
+    }
+
+    Node* parseVarAccessViaBrackets(Node *map){
+        Context con = context();
+        next();
+        auto arg = parseExpression();
+        parse(RIGHT_ANGLE_BRACKET);
+        return new FuncInfixOperator(con, map, arg, "get");
     }
 
     Node* parseInt(){
@@ -280,9 +293,11 @@ struct Parser {
         return current()->type != type;
     }
 
-    void parse(TokenType expectedType){
+    void parse(TokenType expectedType, bool callNext = true){
         if (is(expectedType)){
-            next();
+            if (callNext){
+                next();
+            }
         } else {
             std::ostringstream stream;
             stream << "Expected " << tokenTypeToString(expectedType)
@@ -326,7 +341,6 @@ struct Parser {
         //std::cerr << stream.str() << "\n";
         throw stream.str();
     }
-
 };
 
 }
