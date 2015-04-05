@@ -96,12 +96,11 @@ struct LangContext {
     size_t columnNumber;
 
     LangContext(std::string *fileName, size_t lineNumber, size_t columnNumber)
-        : _fileName(fileName), lineNumber(lineNumber), columnNumber(columnNumber) {
-    }
+        : _fileName(fileName), lineNumber(lineNumber), columnNumber(columnNumber) {}
 
     std::string str(){
         std::ostringstream stream;
-        stream << fileName() << "[" << lineNumber << ":" << columnNumber << "]";
+        stream << fileName() << ":" << lineNumber << "." << columnNumber;
         return stream.str();
     }
 
@@ -117,8 +116,7 @@ struct Line {
     LangContext context;
 	LineType type;
 
-    Line(LangContext context, LineType type) : context(context), type(type) {
-    }
+    Line(LangContext context, LineType type) : context(context), type(type) {}
 
     virtual std::string str(){
         std::ostringstream stream;
@@ -163,7 +161,7 @@ struct Parser {
     size_t lang_column_number = 0;
     bool ended = false;
 
-    Parser(std::istream *stream, std::string file_name = "std::cin") {
+    Parser(std::istream *stream, std::string file_name = "input") {
         this->stream = stream;
         this->file_name = new std::string(file_name);
     }
@@ -202,8 +200,7 @@ struct VerboseParser : Parser {
 
     std::unordered_map<std::string, size_t> labels;
 
-    VerboseParser(std::istream *stream, std::string context = "")
-        : Parser(stream, context) {}
+    using Parser::Parser;
 
     std::vector<Line*> lines(){
         std::vector<Line*> vec;
