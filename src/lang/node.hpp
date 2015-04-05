@@ -272,7 +272,7 @@ struct BlockNode : InnerNode {
 struct SetVarNode : InfixOperator {
     using InfixOperator::InfixOperator;
 
-    void _compile(Target &target){
+    void compile(Target &target){
         left->compile(target);
         right->compile(target);
         target.SET_VAR();

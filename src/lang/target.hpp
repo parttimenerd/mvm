@@ -104,11 +104,11 @@ struct Target {
     }
 
     virtual void SET_VAR(){
-        std::cout << "SET_VAR";
+        std::cout << "SET_VAR\n";
     }
 
     virtual void INIT_VAR(std::string varName){
-        std::cout << "INIT_VAR " << varName;
+        std::cout << "INIT_VAR " << varName << "\n";
     }
 };
 

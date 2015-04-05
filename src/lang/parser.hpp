@@ -170,6 +170,8 @@ struct Parser {
             node = parseBraced();
         } else if (is(ID)){
             node = parseID();
+        } else if (is(VAR)){
+            node = parseVar();
         } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
@@ -217,6 +219,20 @@ struct Parser {
         }
         next();
         return new CallNode(con, func, arguments);
+    }
+
+    Node* parseVar(){
+        Context con = context();
+        next();
+        if (isNot(ID)){
+            std::ostringstream stream;
+            stream << "Unexpected token " << current()->str();
+            stream << " expected id instead";
+            error(stream.str());
+        }
+        std::string name = getArgument<std::string>();
+        next();
+        return new InitVarNode(con, name);
     }
 
     Node* parseInt(){
