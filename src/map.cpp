@@ -35,9 +35,12 @@ void Map::set(HeapObject *key, Reference<HeapObject>* value){
             if (old != value){
                 old->dereference();
                 map[key] = value;
+                value->reference();
             }
         } else {
             map[key] = value;
+            value->reference();
+            key->reference();
         }
     }
 }

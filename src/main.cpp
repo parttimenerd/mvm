@@ -18,6 +18,7 @@
 #include "stdlib.hpp"
 #include "lang/lexer.hpp"
 #include "lang/parser.hpp"
+#include "exception.hpp"
 
 // TODO add other line types
 
@@ -37,8 +38,11 @@ int main(int argc, char *argv[]){
     loadStdLib(env);
     try {
         env.interpret(new VerboseParser(&std::cin));
-    } catch (std::string msg){
-        std::cerr << msg << "\n";
+    } catch (Exception *ex){
+        std::cerr << ex->str();
+        exit(1);
+    } catch (std::string str){
+        std::cerr << str;
         exit(1);
     }
 }

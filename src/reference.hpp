@@ -49,6 +49,11 @@ struct Reference : HeapObject {
         (void)static_cast<HeapObject>(*value);
     }
 
+    template<typename S>
+    S* as(){
+        return (S*)value;
+    }
+
     Reference<T>* transfer(){
         if (reference_count == 0){
             throw std::string("Ref count of ") + escapedStr() + std::string(" is 0, can't reduce it");

@@ -3,7 +3,7 @@ project(mvm)
 
 
 ## Configure compiler and libraries
-add_compile_options(-std=c++1y -Wall -Wextra -Wno-switch-enum)
+add_compile_options(-std=c++1y -Wno-switch-enum)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

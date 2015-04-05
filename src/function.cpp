@@ -8,12 +8,15 @@
 #include "array.hpp"
 #include "nothing.hpp"
 #include "string.hpp"
+#include "exception.hpp"
 
-Function::Function(Env *env, size_t parameter_count) : Map(env) {
+Function::Function(Env *env, ExceptionContext location, Scope *parent_scope,
+                   size_t parameter_count)
+    : Map(env), location(location), parent_scope(parent_scope), parameter_count(parameter_count){
     type = Type::FUNCTION;
-    Map::set(make_sref(env->string("parameter_count")).value,
-        (Reference<HeapObject>*)make_sref(env->integer((int_type)parameter_count)).reference);
-    this->parameter_count = parameter_count;
+    Map::set(env->sstring("parameter_count").value,
+        env->sinteger((int_type)parameter_count).reference);
+    parent_scope->reference();
 }
 
 void Function::exec(std::vector<Reference<HeapObject>*> &arguments){
@@ -23,16 +26,20 @@ void Function::exec(std::vector<Reference<HeapObject>*> &arguments){
         std::vector<Reference<HeapObject>*> args(arguments.begin(), arguments.begin() + parameter_count);
         std::vector<Reference<HeapObject>*> misc_args(arguments.begin() + parameter_count, arguments.end());
         FunctionArguments argss(this, args, misc_args, arguments);
-        exec(argss);
+        try {
+            exec(argss);
+        } catch (Exception *ex){
+            ex->addContext(location);
+            throw ex;
+        }
     }
 }
 
-CodeFunction::CodeFunction(Env *env, Scope *parent_scope,
-    std::vector<std::string> parameters, std::vector<Line*> lines) : Function(env, 0) {
-    this->parent_scope = parent_scope;
-    this->parameter_count = parameters.size();
-    this->parameters = parameters;
-    this->lines = lines;
+CodeFunction::CodeFunction(Env *env, ExceptionContext location, Scope *parent_scope,
+    std::vector<std::string> parameters, std::vector<Line*> lines)
+    : Function(env, location, parent_scope, 0),
+    lines(lines), parameters(parameters) {
+    parameter_count = parameters.size();
 }
 
 Scope* CodeFunction::initFunctionScope(FunctionArguments &args){
@@ -48,9 +55,12 @@ Scope* CodeFunction::initFunctionScope(FunctionArguments &args){
 void CodeFunction::exec(FunctionArguments &args){
     Scope *functionBaseScope = initFunctionScope(args);
     env->stack->pushFrame();
-
-    // execute the code lines and wrap it with a try catch
-    env->interpret(functionBaseScope, lines);
+    Exception *exception = 0;
+    try {
+        env->interpret(functionBaseScope, lines);
+    } catch (Exception *ex){
+        exception = ex;
+    }
 
     Reference<HeapObject>* returnVal = env->stack->pop();
     env->stack->popFrameAndAddReturn(returnVal);
@@ -64,12 +74,24 @@ void CodeFunction::exec(FunctionArguments &args){
     for (auto &arg : args.all_arguments){
         arg->dereference();
     }
+
+    if (exception != 0){
+        throw exception;
+    }
 }
 
 void CPPFunction::exec(FunctionArguments &args){
    auto ret_val = this->impl_func(env, args);
-   env->stack->push(ret_val);
+   Exception *exception = 0;
+   try {
+       env->stack->push(ret_val);
+   } catch (Exception *ex){
+       exception = ex;
+   }
    for (auto &arg : args.all_arguments){
        arg->dereference();
+   }
+   if (exception != 0){
+       throw exception;
    }
 }

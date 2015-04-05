@@ -90,31 +90,23 @@ static void replaceAll(std::string& str, const std::string& from, const std::str
     }
 }
 
-static std::vector<std::string> files;
-
-static size_t getIDofFile(std::string fileName){
-    for (size_t i = 0; i < files.size(); i++){
-        if (fileName == files[i]){
-            return i;
-        }
-    }
-    size_t id = files.size();
-    files.push_back(fileName);
-    return id;
-}
-
 struct LangContext {
-    size_t fileID;
+    std::string *_fileName;
     size_t lineNumber;
     size_t columnNumber;
 
-    LangContext(size_t fileID, size_t lineNumber, size_t columnNumber)
-        : fileID(fileID), lineNumber(lineNumber), columnNumber(columnNumber) {}
+    LangContext(std::string *fileName, size_t lineNumber, size_t columnNumber)
+        : _fileName(fileName), lineNumber(lineNumber), columnNumber(columnNumber) {
+    }
 
     std::string str(){
         std::ostringstream stream;
-        stream << files[fileID] << "[" << lineNumber << ":" << columnNumber << "]";
+        stream << fileName() << "[" << lineNumber << ":" << columnNumber << "]";
         return stream.str();
+    }
+
+    std::string fileName(){
+        return *_fileName;
     }
 };
 
@@ -125,10 +117,13 @@ struct Line {
     LangContext context;
 	LineType type;
 
-    Line(LangContext context, LineType type) : context(context), type(type) {}
+    Line(LangContext context, LineType type) : context(context), type(type) {
+    }
 
     virtual std::string str(){
-        return lineTypeToString(type) + "["s + context.str() + "]"s;
+        std::ostringstream stream;
+        stream << lineTypeToString(type) << "["  << context.str() << "]";
+        return stream.str();
     }
 
     std::string typeString(){
@@ -161,8 +156,8 @@ struct ArgumentedLine : Line {
 struct Parser {
 
     std::istream *stream;
-    size_t file_id;
     std::string current_line;
+    std::string *file_name;
     size_t line_number = 0;
     size_t lang_line_number = 0;
     size_t lang_column_number = 0;
@@ -170,7 +165,7 @@ struct Parser {
 
     Parser(std::istream *stream, std::string file_name = "std::cin") {
         this->stream = stream;
-        this->file_id = getIDofFile(file_name);
+        this->file_name = new std::string(file_name);
     }
 
 
@@ -178,12 +173,11 @@ struct Parser {
         std::ostringstream stream;
         stream << "Error in line " << line_number << "[" << context().str() << "]"
                << ": " << msg << msg1;
-        std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 
     LangContext context(){
-        return LangContext(file_id, lang_line_number, lang_column_number);
+        return LangContext(file_name, lang_line_number, lang_column_number);
     }
 
     virtual std::vector<Line*> lines(){
@@ -194,7 +188,6 @@ struct Parser {
                 vec.push_back(line);
             }
         }
-
         return vec;
     }
 
@@ -269,24 +262,28 @@ struct VerboseParser : Parser {
         //std::cout << tokens[1] << "\n";
         LineType type = stringToLineType(tokens[0]);
         //std::cout << "##" << tokens[0] << "#" << tokens[1] << "#";
+        Line *lineObj = 0;
         switch (type){
             case LineType::CALL_N:
             case LineType::ASSERT_STACK_HEIGHT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<size_t>(context(), type, strToNum<size_t>(tokens[1]));
+                lineObj = new ArgumentedLine<size_t>(context(), type, strToNum<size_t>(tokens[1]));
+                break;
             case LineType::PUSH_INT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<int_type>(context(), type, strToNum<int_type>(tokens[1]));
+                lineObj = new ArgumentedLine<int_type>(context(), type, strToNum<int_type>(tokens[1]));
+                break;
             case LineType::JUMP:
             case LineType::JUMP_IF:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<std::string>(context(), type, tokens[1]);
+                lineObj = new ArgumentedLine<std::string>(context(), type, tokens[1]);
+                break;
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
             case LineType::INIT_VAR:
@@ -294,12 +291,13 @@ struct VerboseParser : Parser {
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<std::string>(context(), type, strToString(tokens[1]));
+                lineObj = new ArgumentedLine<std::string>(context(), type, strToString(tokens[1]));
             case LineType::PUSH_BOOLEAN:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
-                return new ArgumentedLine<bool>(context(), type, tokens[1] == "true");
+                lineObj = new ArgumentedLine<bool>(context(), type, tokens[1] == "true");
+                break;
             case LineType::PUSH_NOTHING:
             case LineType::PUSH_ARRAY:
             case LineType::PUSH_MAP:
@@ -312,21 +310,24 @@ struct VerboseParser : Parser {
             case LineType::POP_SCOPE:
             case LineType::NOP:
             case LineType::PRINT_STACK:
-                return new Line(context(), type);
+                lineObj = new Line(context(), type);
+                break;
             case LineType::LINE_COLUMN_NUMBER:
-                if (tokens.size() != 3){
-                    std::ostringstream stream;
-                    stream << "Expected two arguments, not " << tokens.size() - 1;
-                    error(stream.str());
+                {
+                        if (tokens.size() != 2){
+                            error("Expected two arguments");
+                        }
+                        auto _arr = tokenize(tokens[1]);
+                        this->lang_line_number = strToNum<size_t>(_arr[0]);
+                        this->lang_column_number = strToNum<size_t>(_arr[1]);
+                        lineObj = new Line(context(), LineType::NOP);
                 }
-                lang_line_number = strToNum<size_t>(tokens[1]);
-                lang_column_number = strToNum<size_t>(tokens[2]);
-                return new Line(context(), type);
+                break;
             case LineType::ERROR:
             default:
                 error("Don't know what to do with ", line());
         }
-        return 0;
+        return lineObj;
     }
 
     template<typename T>

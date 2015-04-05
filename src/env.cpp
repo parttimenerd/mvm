@@ -53,15 +53,24 @@ Reference<String>* Env::createString(std::string value, bool reference){
     return new Reference<String>(this, str, reference);
 }
 
-Reference<CodeFunction>* Env::createFunction(Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
-    CodeFunction *func = new CodeFunction(this, parent_scope, parameters, lines);
+Reference<CodeFunction>* Env::createFunction(ExceptionContext context, Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
+    CodeFunction *func = new CodeFunction(this, context, parent_scope, parameters, lines);
     return new Reference<CodeFunction>(this, func, reference);
 }
 
-void Env::addFunction(std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments)> implFunc){
-    auto *obj = new CPPFunction(this, parameter_count, implFunc);
-    obj->name = name;
+void Env::addFunction(ExceptionContext context, std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments)> implFunc, Scope *parent_scope){
+    if (parent_scope == 0){
+        parent_scope = root_scope;
+    }
+    auto *obj = new CPPFunction(this, context, parent_scope, parameter_count, implFunc);
     root_scope->set(name, obj);
+}
+
+Exception *Env::exception(Reference<HeapObject> *type, Reference<HeapObject> *message, LangContext context, Reference<HeapObject> *misc, std::string functionName){
+    if (type->value->is(Type::STRING) && message->value->is(Type::STRING)){
+        return new Exception(type->as<String>()->value, message->as<String>()->value, ExceptionContext(context, functionName), misc);
+    }
+    return new Exception("wrong type", "wrong argument types for throw", ExceptionContext(context, functionName), misc);
 }
 
 void Env::interpret(Scope *function_base_scope, std::vector<Line*> code){

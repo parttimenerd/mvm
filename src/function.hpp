@@ -2,6 +2,7 @@
 #include "scope.hpp"
 #include "reference.hpp"
 #include "map.hpp"
+#include "exception.hpp"
 
 
 struct Line;
@@ -33,10 +34,12 @@ struct FunctionArguments {
 };
 
 struct Function : Map {
-	size_t parameter_count;
-	std::string name = "";
 
-    Function(Env *env, size_t parameter_count);
+    ExceptionContext location;
+    Scope *parent_scope;
+    size_t parameter_count;
+
+    Function(Env *env, ExceptionContext location, Scope *parent_scope, size_t parameter_count);
 
     virtual void exec(FunctionArguments&){}
 
@@ -44,17 +47,23 @@ struct Function : Map {
 
     std::string str(){
         std::ostringstream stream;
-        stream << "function " << name << " with " << parameter_count << " parameters";
+        stream << "function " << location.context.str() << " with " << parameter_count << " parameters";
         return stream.str();
+    }
+
+    std::vector<HeapObject*> getReferencedObjects() {
+        auto vec = Map::getReferencedObjects();
+        vec.push_back(parent_scope);
+        return vec;
     }
 };
 
 struct CodeFunction : Function {
-	Scope *parent_scope;
 	std::vector<Line*> lines;
 	std::vector<std::string> parameters;
 
-    CodeFunction(Env *env, Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines);
+    CodeFunction(Env *env, ExceptionContext location, Scope *parent_scope,
+                 std::vector<std::string> parameters, std::vector<Line*> lines);
 
     Scope* initFunctionScope(FunctionArguments &args);
 
@@ -65,7 +74,9 @@ struct CPPFunction : Function {
 
     std::function<Reference<HeapObject>*(Env*, FunctionArguments)> impl_func;
 
-    CPPFunction(Env *env, size_t parameter_count, std::function<Reference<HeapObject>*(Env *env, FunctionArguments)> impl_func) : Function(env, parameter_count){
+    CPPFunction(Env *env, ExceptionContext location, Scope *parent_scope, size_t parameter_count,
+                std::function<Reference<HeapObject>*(Env *env, FunctionArguments)> impl_func)
+        : Function(env, location, parent_scope, parameter_count){
         this->impl_func = impl_func;
     }
 
