@@ -56,6 +56,12 @@ struct InnerNode : Node {
     std::vector<Node*> getChildren(){
         return children;
     }
+
+    virtual ~InnerNode(){
+        for (auto &node : children){
+            delete node;
+        }
+    }
 };
 
 struct InfixOperator : Node {
@@ -77,6 +83,11 @@ struct InfixOperator : Node {
         return std::string("(") + left->str() + right->str()
                 + std::string(")");
     }
+
+    ~InfixOperator(){
+        delete left;
+        delete right;
+    }
 };
 
 struct CollectableInfixOperator : InfixOperator {
@@ -88,7 +99,7 @@ struct CollectableInfixOperator : InfixOperator {
         compile(target, vec);
     }
 
-    virtual void compile(Target &target, std::vector<Node*> &children);
+    virtual void compile(Target &target, std::vector<Node*> &children) {}
 
     void compileNodes(Target &target, std::vector<Node*> &children){
         for (auto *child : children){
@@ -127,7 +138,7 @@ struct FuncInfixOperator : CollectableInfixOperator {
 
     std::string funcName;
 
-    FuncInfixOperator(Context context, Node* left, Node* right, std::string &funcName)
+    FuncInfixOperator(Context context, Node* left, Node* right, std::string funcName)
         : CollectableInfixOperator(context, left, right), funcName(funcName) {}
 
     virtual void compile(Target &target, std::vector<Node*> &children){
@@ -247,4 +258,62 @@ struct BlockNode : InnerNode {
     }
 };
 
+struct SetVarNode : InfixOperator {
+    using InfixOperator::InfixOperator;
+
+    void _compile(Target &target){
+        left->compile(target);
+        right->compile(target);
+        target.SET_VAR();
+    }
+};
+
+struct UnaryOperator : Node {
+
+    Node *child;
+
+    UnaryOperator(Context context, Node *child): Node(context), child(child) {}
+
+    virtual ~UnaryOperator(){
+        delete child;
+    }
+};
+
+struct UnaryFuncNode : UnaryOperator {
+    std::string funcName;
+
+    UnaryFuncNode(Context context, Node *child, std::string funcName)
+        : UnaryOperator(context, child), funcName(funcName) {}
+
+    void _compile(Target &target){
+        child->compile(target);
+        target.CALL_N(funcName, 1);
+    }
+
+};
+
+template<typename T>
+struct UnaryInstructionNode : Node {
+
+    T value;
+
+    UnaryInstructionNode(Context context, T value) : Node(context), value(value) {}
+
+};
+
+struct InitVarNode : UnaryInstructionNode<std::string> {
+    using UnaryInstructionNode::UnaryInstructionNode;
+
+    void _compile(Target &target){
+        target.INIT_VAR(value);
+    }
+};
+
+struct PushVarNode : UnaryInstructionNode<std::string> {
+    using UnaryInstructionNode::UnaryInstructionNode;
+
+    void _compile(Target &target){
+        target.PUSH_VAR(value);
+    }
+};
 }

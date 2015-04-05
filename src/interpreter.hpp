@@ -2,6 +2,7 @@
 #include "env.hpp"
 #include "heapobjects.hpp"
 #include "parser.hpp"
+#include "reference.hpp"
 
 struct Interpreter {
     Env *env;
@@ -53,7 +54,7 @@ struct Interpreter {
                     env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
                     break;
                 case LineType::SET_VAR:
-                    scope->set(toArgLine<std::string>(line)->argument, env->stack->pop());
+                    make_sref(env->stack->pop()).reference->set(make_sref(env->stack->pop()).reference);
                     break;
                 case LineType::INIT_VAR:
                     scope->initVar(toArgLine<std::string>(line)->argument);
@@ -70,7 +71,7 @@ struct Interpreter {
                 case LineType::JUMP:
                     currentPos = toArgLine<size_t>(line)->argument - 1;
                     break;
-                 case LineType::JUMP_IF:
+                case LineType::JUMP_IF:
                     {
                         Reference<HeapObject> *obj = env->stack->pop();
                         if (obj->toBool()){
@@ -81,6 +82,17 @@ struct Interpreter {
                         obj->dereference();
                     }
                     break;
+                case LineType::JUMP_IF_NOT:
+                   {
+                       Reference<HeapObject> *obj = env->stack->pop();
+                       if (!obj->toBool()){
+                           //std::cout << currentPos << "\n";
+                           currentPos = toArgLine<size_t>(line)->argument - 1;
+                           //std::cout << currentPos << "\n";
+                       }
+                       obj->dereference();
+                   }
+                   break;
                 case LineType::POP:
                     env->stack->popAndDeref();
                     break;

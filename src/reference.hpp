@@ -62,6 +62,14 @@ struct Reference : HeapObject {
         return this;
     }
 
+    void _set(HeapObject *other){
+        Reference<HeapObject>* ref = (Reference<HeapObject>*)other;
+        if (ref->value->type != value->type){
+            throw std::string("Can't assign variables to changing typed values");
+        }
+        value = ref->as<T>();
+    }
+
     virtual std::vector<HeapObject*> getReferencedObjects(){
         return {value};
     }

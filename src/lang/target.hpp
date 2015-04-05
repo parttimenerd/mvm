@@ -55,10 +55,6 @@ struct Target {
         std::cout << "PUSH_VAR " << variableName << "\n";
     }
 
-    virtual void PUSH_VAR2(){
-        std::cout << "PUSH_VAR2\n";
-    }
-
     void CALL_N(std::string functionName, size_t numberOfArguments){
         PUSH_VAR(functionName);
         CALL_N(numberOfArguments);
@@ -105,6 +101,14 @@ struct Target {
 
     virtual void LINE_COLUMN_NUMBER(size_t lineNumber, size_t columnNumber){
         std::cout << "LINE_COLUMN_NUMBER " << lineNumber << " " << columnNumber << "\n";
+    }
+
+    virtual void SET_VAR(){
+        std::cout << "SET_VAR";
+    }
+
+    virtual void INIT_VAR(std::string varName){
+        std::cout << "INIT_VAR " << varName;
     }
 };
 

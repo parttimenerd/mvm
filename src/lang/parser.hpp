@@ -16,7 +16,8 @@ enum Associativity {
  */
 struct Parser {
 
-    typedef std::tuple<size_t, Associativity, std::function<Node*(Node*, Node*)>> infixOp;
+    typedef std::function<Node*(Context, Node*, Node*)> infixOpFunc;
+    typedef std::tuple<size_t, Associativity, infixOpFunc> infixOp;
 
     /**
      * Contains tuples (priority/precedence, associativity, function to create a node) for
@@ -24,27 +25,36 @@ struct Parser {
      *
      * @see https://en.wikipedia.org/wiki/Order_of_operations
      */
-    std::unordered_map<std::string, infixOp>  infixOperators; /*= {
-        {"||", std::make_tuple(30, LEFT_ASSOC, [](Node* l, Node* r){ return new OrNode(l, r); })},
-        {"&&", std::make_tuple(40, LEFT_ASSOC, [](Node* l, Node* r){ return new AndNode(l, r); })},
-        {"!=", std::make_tuple(41, LEFT_ASSOC, [](Node* l, Node* r){ return new NotEqualNode(l, r); })},
-        {"==", std::make_tuple(41, LEFT_ASSOC, [](Node* l, Node* r){ return new EqualNode(l, r); })},
-        {"<", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new LowerNode(l, r); })},
-        {">", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new GreaterNode(l, r); })},
-        {"<=", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new LowerEqualNode(l, r); })},
-        {">=", std::make_tuple(42, LEFT_ASSOC, [](Node* l, Node* r){ return new GreaterEqualNode(l, r); })},
-        {"+", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new AddNode(l, r); })},
-        {"-", std::make_tuple( 50, LEFT_ASSOC, [](Node* l, Node* r){ return new SubNode(l, r); })},
-        {"*", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new MulNode(l, r); })},
-        {"/", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new DivNode(l, r); })},
-        {"%", std::make_tuple(100, LEFT_ASSOC, [](Node* l, Node* r){ return new ModNode(l, r); })}
-    }*/
+    std::unordered_map<std::string, infixOp>  infixOperators = {
+        {"=", std::make_tuple(20, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new SetVarNode(c, l, r); })},
+        {":=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("set_direct"))},
+        {"||", std::make_tuple(30, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new OrNode(c, l, r); })},
+        {"&&", std::make_tuple(40, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new AndNode(c, l, r); })},
+        {"!=", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("not_equal?"))},
+        {"==", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("eq?") )},
+        {"<", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("less?"))},
+        {">", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater?"))},
+        {"<=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater_equal?"))},
+        {">=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater_equal?"))},
+        {"+", std::make_tuple( 50, LEFT_ASSOC, _funcInfixOperatorNode("plus"))},
+        {"-", std::make_tuple( 50, LEFT_ASSOC, _funcInfixOperatorNode("minus"))},
+        {"*", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("multiply"))},
+        {"/", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("divide"))},
+        {"%", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("modulo"))},
+        {"**", std::make_tuple(100, RIGHT_ASSOC, _funcInfixOperatorNode("power"))}
+    };
 
-    typedef std::function<Node*(Node*)> unaryOp;
+    infixOpFunc _funcInfixOperatorNode(std::string name){
+        return [name](Context context, Node *left, Node *right){
+            return new FuncInfixOperator(context, left, right, name);
+        };
+    }
 
-    std::unordered_map<std::string, unaryOp>  prefixOperators /*= {
-        //{"!", [](Node* l, Node* r){ return new OrNode(l, r); }}
-    }*/;
+    typedef std::function<Node*(Context, Node*)> unaryOp;
+
+    std::unordered_map<std::string, unaryOp>  prefixOperators = {
+        {"!", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "not"); }}
+    };
 
     std::unordered_map<std::string, unaryOp>  postfixOperators /*= {
         //{"!", [](Node* l, Node* r){ return new OrNode(l, r); }}
@@ -105,7 +115,7 @@ struct Parser {
     }
 
     Node* createInfixOpNode(Token *op, Node* left, Node* right){
-        return std::get<2>(getInfixOp(op))(left, right);
+        return std::get<2>(getInfixOp(op))(op->context, left, right);
     }
 
     size_t infixOpPrecedence(Token *op){
@@ -142,9 +152,9 @@ struct Parser {
 
 
     Node* parseAtom(){
-        std::vector<std::string> prefixOps;
+        std::vector<ArgumentedToken<std::string>*> prefixOps;
         while (isPrefixOperator(current())){
-            prefixOps.push_back(getArgument<std::string>());
+            prefixOps.push_back((ArgumentedToken<std::string>*)current());
             next();
         }
         Node *node;
@@ -166,16 +176,16 @@ struct Parser {
             stream << " expected atom expression instead";
             error(stream.str());
         }
-        std::vector<std::string> postfixOps;
+        std::vector<ArgumentedToken<std::string>*> postfixOps;
         while (isPostfixOperator(current())){
-            postfixOps.push_back(getArgument<std::string>());
+            postfixOps.push_back((ArgumentedToken<std::string>*)current());
             next();
         }
         for (auto &pre : prefixOps){
-            node = prefixOperators[pre](node);
+            node = prefixOperators[pre->argument](pre->context, node);
         }
         for (auto &pre : postfixOps){
-            node = postfixOperators[pre](node);
+            node = postfixOperators[pre->argument](pre->context, node);
         }
         return 0;
     }

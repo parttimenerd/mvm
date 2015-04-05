@@ -21,6 +21,7 @@ enum class LineType : uint8_t {
     POP,
     DUP,
     JUMP_IF,
+    JUMP_IF_NOT,
     JUMP,
     PUSH_SCOPE,
     POP_SCOPE,
@@ -49,6 +50,7 @@ static std::vector<std::string> type_names = {
     "POP",
     "DUP",
     "JUMP_IF",
+    "JUMP_IF_NOT",
     "JUMP",
     "PUSH_SCOPE",
     "POP_SCOPE",
@@ -276,6 +278,7 @@ struct VerboseParser : Parser {
                 break;
             case LineType::JUMP:
             case LineType::JUMP_IF:
+            case LineType::JUMP_IF_NOT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -284,7 +287,6 @@ struct VerboseParser : Parser {
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
             case LineType::INIT_VAR:
-            case LineType::SET_VAR:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -306,6 +308,7 @@ struct VerboseParser : Parser {
             case LineType::PUSH_SCOPE:
             case LineType::POP_SCOPE:
             case LineType::NOP:
+            case LineType::SET_VAR:
             case LineType::PRINT_STACK:
                 lineObj = new Line(context(), type);
                 break;
