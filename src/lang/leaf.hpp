@@ -20,6 +20,10 @@ struct Leaf : Node {
     virtual NodeType type(){
         return LEAF;
     }
+
+    virtual bool isVariableNode(){
+        return false;
+    }
 };
 
 struct IntNode : Leaf<int_type> {
@@ -52,6 +56,19 @@ struct VariableNode : Leaf<std::string> {
     void _compile(Target &target){
         target.PUSH_VAR(value);
     }
+
+    bool isVariableNode(){
+        return true;
+    }
+
+};
+
+struct InitVarNode : Leaf<std::string> {
+    using Leaf::Leaf;
+
+    void _compile(Target &target){
+        target.INIT_VAR(value);
+    }
 };
 
 struct BooleanNode : Leaf<bool> {
@@ -75,5 +92,13 @@ struct NothingNode : Node {
         return "[nothing]";
     }
 };
+
+CallNode *createMapNode(Context context, std::vector<Node*> arguments = std::vector<Node*>()){
+    return new CallNode(context, new StringNode(context, "create_map"), arguments);
+}
+
+CallNode *createArrayNode(Context context, std::vector<Node*> arguments = std::vector<Node*>()){
+    return new CallNode(context, new StringNode(context, "create_array"), arguments);
+}
 
 }

@@ -312,22 +312,6 @@ struct UnaryInstructionNode : Node {
 
 };
 
-struct InitVarNode : UnaryInstructionNode<std::string> {
-    using UnaryInstructionNode::UnaryInstructionNode;
-
-    void _compile(Target &target){
-        target.INIT_VAR(value);
-    }
-};
-
-struct PushVarNode : UnaryInstructionNode<std::string> {
-    using UnaryInstructionNode::UnaryInstructionNode;
-
-    void _compile(Target &target){
-        target.PUSH_VAR(value);
-    }
-};
-
 struct VarAccessViaDotOperator : UnaryOperator {
 
     std::string varName;

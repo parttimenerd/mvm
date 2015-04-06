@@ -54,10 +54,18 @@ struct Interpreter {
                     env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
                     break;
                 case LineType::SET_VAR:
-                    make_sref(env->stack->pop()).reference->set(make_sref(env->stack->pop()).reference);
+                    {
+                        auto ref = make_sref(env->stack->pop());
+                        make_sref(env->stack->pop()).reference->set(ref.reference);
+                        env->stack->push(ref);
+                    }
                     break;
                 case LineType::INIT_VAR:
-                    scope->initVar(toArgLine<std::string>(line)->argument);
+                    {
+                    auto varName = toArgLine<std::string>(line)->argument;
+                    scope->initVar(varName);
+                    env->stack->push(make_sref(scope->get(varName)).reference);
+                    }
                     break;
                 case LineType::CALL_N:
                     call(toArgLine<size_t>(line)->argument);

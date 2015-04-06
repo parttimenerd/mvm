@@ -31,7 +31,7 @@ struct Parser {
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new OrNode(c, l, r); })},
         {"&&", std::make_tuple(40, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new AndNode(c, l, r); })},
         {"!=", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("not_equal?"))},
-        {"==", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("eq?") )},
+        {"==", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("equal?") )},
         {"<", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("less?"))},
         {">", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater?"))},
         {"<=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater_equal?"))},
@@ -172,7 +172,11 @@ struct Parser {
             node = parseID();
         } else if (is(VAR)){
             node = parseVar();
-        }  else {
+        } else if (is(LEFT_ANGLE_BRACKET)){
+            node = parseArrayLiteral();
+        } else if (is(LEFT_CURLY_BRACKET)){
+            node = parseMapLiteral(context());
+        } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
             stream << " expected atom expression instead";
@@ -220,7 +224,7 @@ struct Parser {
         } else if (name == "while"){
             node = parseWhile();
         } else {
-            node = new PushVarNode(con, name);
+            node = new VariableNode(con, name);
         }
         return node;
     }
@@ -254,6 +258,18 @@ struct Parser {
         if (is(LEFT_CURLY_BRACKET)){
             std::vector<Node*> nodes;
             parse(LEFT_CURLY_BRACKET);
+            if (is(RIGHT_CURLY_BRACKET)){
+                next();
+                return createMapNode(con);
+            }
+            auto firstExpression = parseExpression();
+            if (isMapKey(firstExpression)){
+                if (is(COLON)){
+                    //next();
+                    return parseMapLiteral(con, firstExpression);
+                }
+            }
+            nodes.push_back(firstExpression);
             while (isNot(RIGHT_CURLY_BRACKET)){
                 nodes.push_back(parseExpression());
                 if (is(RIGHT_CURLY_BRACKET)){
@@ -271,6 +287,66 @@ struct Parser {
             parse(LINE_BREAK);
         }
         return node;
+    }
+
+    bool isMapKey(Node*){
+        return true; //node->type() == LEAF
+    }
+
+    Node *parseMapKeyNode(Node *key){
+        if (key->type() == LEAF){
+            auto node = static_cast<Leaf<std::string>*>(key);
+            if (node->isVariableNode()){
+                return new StringNode(node->context, node->value);
+            }
+        }
+        return key;
+    }
+
+    Node *parseMapLiteral(Context context, Node *firstKey = 0){
+        std::vector<Node*> arguments;
+        if (firstKey == 0){
+            next();
+            auto expr = parseExpression();
+            if (isMapKey(expr)){
+                arguments.push_back(parseMapKeyNode(expr));
+            } else {
+                error("Expected map key but got something else");
+            }
+        } else {
+            arguments.push_back(parseMapKeyNode(firstKey));
+        }
+        parse(COLON);
+        arguments.push_back(parseExpression());
+        while (isNot(RIGHT_CURLY_BRACKET)){
+            parse(COMMA);
+            auto expr = parseExpression();
+            if (isMapKey(expr)){
+                arguments.push_back(parseMapKeyNode(expr));
+            } else {
+                error("Expected map key but got something else");
+            }
+            parse(COLON);
+            expr = parseExpression();
+            arguments.push_back(expr);
+        }
+        next();
+        return createMapNode(context, arguments);
+    }
+
+    Node *parseArrayLiteral(){
+        Context con = context();
+        std::vector<Node*> arguments;
+        next();
+        if (isNot(RIGHT_ANGLE_BRACKET)){
+            arguments.push_back(parseExpression());
+            while (isNot(RIGHT_ANGLE_BRACKET)){
+                parse(COMMA);
+                arguments.push_back(parseExpression());
+            }
+        }
+        next();
+        return createArrayNode(con, arguments);
     }
 
     Node *parseCall(Node *func){
@@ -408,7 +484,6 @@ struct Parser {
         std::ostringstream stream;
         stream << "Error in line " << lexer->lineNumber
                << ", around column " << lexer->columnNumber << ": " << msg << msg1;
-        //std::cerr << stream.str() << "\n";
         throw stream.str();
     }
 };
