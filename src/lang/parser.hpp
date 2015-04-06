@@ -28,6 +28,7 @@ struct Parser {
     std::unordered_map<std::string, infixOp>  infixOperators = {
         {"=", std::make_tuple(20, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new SetVarNode(c, l, r); })},
         {":=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("set_direct"))},
+        {"func", std::make_tuple(25, LEFT_ASSOC, _funcInfixOperatorNode(""))},
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new OrNode(c, l, r); })},
         {"&&", std::make_tuple(40, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new AndNode(c, l, r); })},
         {"!=", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("not_equal?"))},
@@ -96,7 +97,7 @@ struct Parser {
 
     Node* parseInfixOpExpression(Node* left, size_t minPrecedence){
         while (isInfixOp(current()) && infixOpPrecedence(current()) >= minPrecedence){
-            auto op = new ArgumentedToken<std::string>(TokenType::OPERATOR, current()->context, getArgument<std::string>(current()));
+            auto op = new ArgumentedToken<std::string>(current()->type, current()->context, getArgument<std::string>(current()));
             next();
             auto *right = parseAtom();
             while (isInfixOp(current()) &&
@@ -115,6 +116,10 @@ struct Parser {
     }
 
     Node* createInfixOpNode(Token *op, Node* left, Node* right){
+        if (op->type == OPERATOR_FUNC){
+            auto funcName = getArgument<std::string>(op);
+            return new FuncInfixOperator(op->context, left, right, funcName);
+        }
         return std::get<2>(getInfixOp(op))(op->context, left, right);
     }
 
@@ -123,6 +128,9 @@ struct Parser {
     }
 
     infixOp getInfixOp(Token *op){
+        if (op->type == OPERATOR_FUNC){
+            return infixOperators["func"];
+        }
         return infixOperators[getArgument<std::string>(op)];
     }
 
@@ -131,7 +139,7 @@ struct Parser {
             std::string key = getArgument<std::string>(op);
             return infixOperators.find(key) != infixOperators.end();
         }
-        return false;
+        return op->type == OPERATOR_FUNC;
     }
 
     bool isPrefixOperator(Token *op){

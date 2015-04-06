@@ -29,6 +29,7 @@ enum TokenType {
     LEFT_ANGLE_BRACKET,
     RIGHT_ANGLE_BRACKET,
     OPERATOR,
+    OPERATOR_FUNC,
     COMMA,
     COLON,
     END,
@@ -61,6 +62,7 @@ std::string tokenTypeToString(TokenType type){
         case VAR: return "var";
         case FUNCTION: return "function";
         case OPERATOR: return "op";
+        case OPERATOR_FUNC: return "\\op";
         case DOT: return ".";
     }
     return "[unknown token]";
@@ -207,6 +209,13 @@ struct Lexer {
             case '#':
                 omitRestOfLine();
                 return nextToken();
+            case '\\':
+                {
+                    next();
+                    Token *tokenObj = parseID();
+                    return token(OPERATOR_FUNC, tokenObj->context,
+                                 static_cast<ArgumentedToken<std::string>*>(tokenObj)->argument);
+                }
             case '"':
             case '\'':
                 return parseString(currentChar);
@@ -370,7 +379,7 @@ struct Lexer {
 
     bool isSpecialChar(){
         return is({'<', '>', '|', '-', '+', '~', '*', '`',
-                   '?', '\\', '=', '/', '&', '%', '$',
+                   '?', '=', '/', '&', '%', '$',
                    '!', '^'});
     }
 
