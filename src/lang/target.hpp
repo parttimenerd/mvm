@@ -12,6 +12,9 @@ namespace lang {
  */
 struct Target {
 
+    std::vector<size_t> breakLabels;
+    std::vector<size_t> continueLabels;
+
     virtual void PUSH_INT(int_type value){
         std::cout << "PUSH_INT " << value << "\n";
     }
@@ -64,19 +67,51 @@ struct Target {
         std::cout << "CALL_N " << numberOfArguments << "\n";
     }
 
-    virtual size_t makeLabel(){
+    size_t makeLabel(){
         size_t label = inventLabel();
         placeLabel(label);
         return label;
     }
 
-    virtual size_t inventLabel(){
+    size_t inventLabel(){
         static size_t count = 0;
         return ++count;
     }
 
     virtual void placeLabel(size_t label){
         std::cout << ":" << label << " NOP\n";
+    }
+
+    void pushBreakLabel(size_t label){
+        breakLabels.push_back(label);
+    }
+
+    void popBreakLabel(){
+        breakLabels.pop_back();
+    }
+
+    size_t getBreakLabel(){
+        return breakLabels.at(breakLabels.size() - 1);
+    }
+
+    bool hasBreakLabel(){
+        return !breakLabels.empty();
+    }
+
+    void pushContinueLabel(size_t label){
+        continueLabels.push_back(label);
+    }
+
+    void popContinueLabel(){
+        continueLabels.pop_back();
+    }
+
+    size_t getContinueLabel(){
+        return continueLabels.at(continueLabels.size() - 1);
+    }
+
+    bool hasContinueLabel(){
+        return !continueLabels.empty();
     }
 
     virtual void JUMP(size_t label){
@@ -109,6 +144,14 @@ struct Target {
 
     virtual void INIT_VAR(std::string varName){
         std::cout << "INIT_VAR " << varName << "\n";
+    }
+
+    virtual void PUSH_SCOPE(){
+        std::cout << "PUSH_SCOPE\n";
+    }
+
+    virtual void POP_SCOPE(){
+        std::cout << "POP_SCOPE\n";
     }
 };
 

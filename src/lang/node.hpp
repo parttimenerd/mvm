@@ -353,5 +353,85 @@ struct VarAccessViaBracketOperator : InfixOperator {
     }
 };
 
+struct WhileNode : InfixOperator {
+    using InfixOperator::InfixOperator;
+
+    void compile(Target &target){
+        target.PUSH_SCOPE();
+        size_t end = target.inventLabel();
+        target.pushBreakLabel(end);
+        size_t header = target.makeLabel();
+        target.pushContinueLabel(header);
+        left->compile(target);
+        target.JUMP_IF_NOT(end);
+        right->compile(target);
+        target.JUMP(header);
+        target.placeLabel(end);
+        target.popBreakLabel();
+        target.popContinueLabel();
+        target.POP_SCOPE();
+    }
+};
+
+struct BreakNode : Node {
+
+    using Node::Node;
+
+    void _compile(Target &target){
+        if (target.hasBreakLabel()){
+            target.JUMP(target.getBreakLabel());
+        }
+    }
+
+};
+
+struct ContinueNode : Node {
+
+    using Node::Node;
+
+    void _compile(Target &target){
+        if (target.hasContinueLabel()){
+            target.JUMP(target.getContinueLabel());
+        }
+    }
+
+};
+
+struct IfNode : Node {
+
+    Node *condition;
+    Node *ifBody;
+    Node *elseBody;
+
+    IfNode(Context context, Node *condition, Node *ifBody, Node *elseBody = 0)
+        : Node(context), condition(condition), ifBody(ifBody), elseBody(elseBody) {}
+
+    void compile(Target &target){
+        size_t end = target.inventLabel();
+        size_t elseBlock = end;
+        if (elseBody != 0){
+            elseBlock = target.inventLabel();
+        }
+        condition->compile(target);
+        target.PUSH_SCOPE();
+        target.JUMP_IF_NOT(elseBlock);
+        ifBody->compile(target);
+        if (elseBody != 0){
+            target.JUMP(end);
+            target.placeLabel(elseBlock);
+            elseBody->compile(target);
+        }
+        target.POP_SCOPE();
+        target.placeLabel(end);
+    }
+
+    ~IfNode(){
+        delete condition;
+        delete ifBody;
+        if (elseBody != 0){
+            delete elseBody;
+        }
+    }
+};
 
 }

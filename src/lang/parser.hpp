@@ -179,34 +179,101 @@ struct Parser {
             error(stream.str());
         }
         std::vector<ArgumentedToken<std::string>*> postfixOps;
+        for (auto &pre : prefixOps){
+            node = prefixOperators[pre->argument](pre->context, node);
+        }
+        bool somethingChanged = true;
+        while (somethingChanged){
+            somethingChanged = false;
+            if (is(LEFT_BRACE)){
+                node = parseCall(node);
+                somethingChanged = true;
+            } else if (is(DOT)){
+                node = parseVarAccessViaDot(node);
+                somethingChanged = true;
+            } else if (is(LEFT_ANGLE_BRACKET)){
+                node = parseVarAccessViaBrackets(node);
+                somethingChanged = true;
+            }
+        }
         while (isPostfixOperator(current())){
             postfixOps.push_back((ArgumentedToken<std::string>*)current());
             next();
         }
-        for (auto &pre : prefixOps){
-            node = prefixOperators[pre->argument](pre->context, node);
-        }
         for (auto &pre : postfixOps){
             node = postfixOperators[pre->argument](pre->context, node);
-        }
-        if (is(LEFT_BRACE)){
-            node = parseCall(node);
-        } else if (is(DOT)){
-            node = parseVarAccessViaDot(node);
-        } else if (is(LEFT_ANGLE_BRACKET)){
-            node = parseVarAccessViaBrackets(node);
         }
         return node;
     }
 
     Node* parseID(){
-       Context con = context();
-       Node *node = new PushVarNode(con, getArgument<std::string>());
-       next();
-       return node;
+        Context con = context();
+        Node *node;
+        std::string name = getArgument<std::string>();
+        next();
+        if (name == "break"){
+            node = new BreakNode(con);
+        } else if (name == "continue"){
+            node = new ContinueNode(con);
+        } else if (name == "if"){
+            node = parseIf();
+        } else if (name == "while"){
+            node = parseWhile();
+        } else {
+            node = new PushVarNode(con, name);
+        }
+        return node;
     }
 
-    Node* parseCall(Node *func){
+    Node *parseIf(){
+        Context con = context();
+        parse(LEFT_BRACE);
+        Node *condition = parseExpression();
+        parse(RIGHT_BRACE);
+        Node *ifBlock = 0;
+        Node *elseBlock = 0;
+        ifBlock = parseCodeBlock();
+        if (is(ID) && getArgument<std::string>() == "else"){
+            next();
+            elseBlock = parseBlock();
+        }
+        return new IfNode(con, condition, ifBlock, elseBlock);
+    }
+
+    Node *parseWhile(){
+        Context con = context();
+        parse(LEFT_BRACE);
+        Node *condition = parseExpression();
+        parse(RIGHT_BRACE);
+        Node *body = parseCodeBlock();
+        return new WhileNode(con, condition, body);
+    }
+
+    Node *parseCodeBlock(){
+        Context con = context();
+        if (is(LEFT_CURLY_BRACKET)){
+            std::vector<Node*> nodes;
+            parse(LEFT_CURLY_BRACKET);
+            while (isNot(RIGHT_CURLY_BRACKET)){
+                nodes.push_back(parseExpression());
+                if (is(RIGHT_CURLY_BRACKET)){
+                    next();
+                    break;
+                } else {
+                    parse(LINE_BREAK);
+                }
+            }
+            next();
+            return new BlockNode(con, nodes);
+        }
+        Node *node = parseExpression();
+        if (!is(LINE_BREAK) && !is(END)){
+            parse(LINE_BREAK);
+        }
+        return node;
+    }
+
+    Node *parseCall(Node *func){
         Context con = func->context;
         std::vector<Node*> arguments;
         next();
@@ -216,9 +283,12 @@ struct Parser {
                 next();
             } else {
                 parse(RIGHT_BRACE);
+                break;
             }
         }
-        next();
+        if (arguments.empty()){
+            next();
+        }
         return new CallNode(con, func, arguments);
     }
 
