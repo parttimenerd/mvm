@@ -54,7 +54,8 @@ struct Parser {
     typedef std::function<Node*(Context, Node*)> unaryOp;
 
     std::unordered_map<std::string, unaryOp>  prefixOperators = {
-        {"!", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "not"); }}
+        {"!", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "not"); }},
+        {"-", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "negate"); }}
     };
 
     std::unordered_map<std::string, unaryOp>  postfixOperators /*= {
@@ -162,13 +163,18 @@ struct Parser {
     Node* parseAtom(){
         std::vector<ArgumentedToken<std::string>*> prefixOps;
         while (isPrefixOperator(current())){
-            prefixOps.push_back((ArgumentedToken<std::string>*)current());
+            auto cur = (ArgumentedToken<std::string>*)current();
+            prefixOps.push_back(
+                        new ArgumentedToken<std::string>(
+                            cur->type, cur->context, cur->argument));
             next();
         }
         Node *node;
         if (is(INT)){
             node = parseInt();
-        } else if (is(BOOLEAN)){
+        } else if (is(FLOAT)){
+            node = parseFloat();
+        }  else if (is(BOOLEAN)){
             node = parseBoolean();
         } else if (is(STRING)){
             node = parseString();
@@ -195,7 +201,7 @@ struct Parser {
         }
         std::vector<ArgumentedToken<std::string>*> postfixOps;
         for (auto &pre : prefixOps){
-            node = prefixOperators[pre->argument](pre->context, node);
+            node = prefixOperators.at(pre->argument)(pre->context, node);
         }
         bool somethingChanged = true;
         while (somethingChanged){
@@ -212,8 +218,10 @@ struct Parser {
             }
         }
         while (isPostfixOperator(current())){
-            postfixOps.push_back((ArgumentedToken<std::string>*)current());
-            next();
+            auto cur = (ArgumentedToken<std::string>*)current();
+            postfixOps.push_back(
+                        new ArgumentedToken<std::string>(
+                            cur->type, cur->context, cur->argument));
         }
         for (auto &pre : postfixOps){
             node = postfixOperators[pre->argument](pre->context, node);
@@ -273,6 +281,7 @@ struct Parser {
                 next();
                 return createMapNode(con);
             }
+            ignoreLineBreaks();
             auto firstExpression = parseExpression();
             if (isMapKey(firstExpression)){
                 if (is(COLON)){
@@ -318,6 +327,7 @@ struct Parser {
         std::vector<Node*> arguments;
         if (firstKey == 0){
             next();
+            ignoreLineBreaks();
             auto expr = parseExpression();
             if (isMapKey(expr)){
                 arguments.push_back(parseMapKeyNode(expr));
@@ -328,18 +338,22 @@ struct Parser {
             arguments.push_back(parseMapKeyNode(firstKey));
         }
         parse(COLON);
+        ignoreLineBreaks();
         arguments.push_back(parseExpression());
         while (isNot(RIGHT_CURLY_BRACKET)){
             parse(COMMA);
+            ignoreLineBreaks();
             auto expr = parseExpression();
             if (isMapKey(expr)){
                 arguments.push_back(parseMapKeyNode(expr));
             } else {
                 error("Expected map key but got something else");
             }
+            ignoreLineBreaks();
             parse(COLON);
             expr = parseExpression();
             arguments.push_back(expr);
+            ignoreLineBreaks();
         }
         next();
         return createMapNode(context, arguments);
@@ -349,11 +363,16 @@ struct Parser {
         Context con = context();
         std::vector<Node*> arguments;
         next();
+        ignoreLineBreaks();
         if (isNot(RIGHT_ANGLE_BRACKET)){
+            ignoreLineBreaks();
             arguments.push_back(parseExpression());
+            ignoreLineBreaks();
             while (isNot(RIGHT_ANGLE_BRACKET)){
                 parse(COMMA);
+                ignoreLineBreaks();
                 arguments.push_back(parseExpression());
+                ignoreLineBreaks();
             }
         }
         next();
@@ -496,6 +515,12 @@ struct Parser {
             stream << "Expected " << tokenTypeToString(expectedType)
                    << " but got " << current()->str();
             error(stream.str());
+        }
+    }
+
+    void ignoreLineBreaks(){
+        while (is(LINE_BREAK)){
+            next();
         }
     }
 
