@@ -62,9 +62,9 @@ struct Interpreter {
                     break;
                 case LineType::INIT_VAR:
                     {
-                    auto varName = toArgLine<std::string>(line)->argument;
-                    scope->initVar(varName);
-                    env->stack->push(make_sref(scope->get(varName)).reference);
+                        auto varName = toArgLine<std::string>(line)->argument;
+                        scope->initVar(varName);
+                        env->stack->push(make_sref(scope->get(varName)).reference);
                     }
                     break;
                 case LineType::CALL_N:
@@ -113,6 +113,8 @@ struct Interpreter {
                 case LineType::POP_SCOPE:
                     popScope();
                     break;
+                case LineType::FUNCTION_HEADER:
+                    functionHeader((FunctionHeaderLine*)line);
                 case LineType::PRINT_STACK:
                     std::cout << env->stack->str();
                     break;
@@ -207,6 +209,28 @@ struct Interpreter {
         } else {
             throw std::string("Cannot pop base scope");
         }
+    }
+
+    SmartReference<HeapObject> functionHeader(FunctionHeaderLine *line){
+        std::vector<Line*> body;
+        size_t openHeaderCount = 1;
+        currentPos++;
+        while (currentPos < code.size() && openHeaderCount != 0){
+            switch(currentLine()->type){
+                case LineType::FUNCTION_HEADER:
+                case LineType::FUNCTION_HEADER_WO_NAME:
+                    openHeaderCount++;
+                    break;
+                case LineType::FUNCTION_END:
+                    openHeaderCount--;
+                    break;
+                default:
+                    break;
+            }
+            body.push_back(currentLine());
+            currentPos++;
+        }
+        return env->scodefunction(ExceptionContext(line->context, line->name), scope, line->arguments, body);
     }
 
     Line* currentLine(){

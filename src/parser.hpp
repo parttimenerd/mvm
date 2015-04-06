@@ -29,6 +29,9 @@ enum class LineType : uint8_t {
     ERROR,
     COMMENT,
     NOP,
+    FUNCTION_HEADER,
+    FUNCTION_HEADER_WO_NAME,
+    FUNCTION_END,
     LINE_COLUMN_NUMBER,
     PRINT_STACK,
     ASSERT_STACK_HEIGHT
@@ -58,6 +61,9 @@ static std::vector<std::string> type_names = {
     "ERROR",
     "COMMENT",
     "NOP",
+    "FUNCTION_HEADER",
+    "FUNCTION_HEADER_WO_NAME",
+    "FUNCTION_END",
     "LINE_COLUMN_NUMBER",
     "PRINT_STACK",
     "ASSERT_STACK_HEIGHT"
@@ -146,6 +152,24 @@ struct ArgumentedLine : Line {
     std::string str(){
         std::ostringstream stream;
         stream << lineTypeToString(type) << "[" << context.str() << "] " << argument;
+        return stream.str();
+    }
+};
+
+struct FunctionHeaderLine : Line {
+    std::string name;
+    std::vector<std::string> arguments;
+
+    FunctionHeaderLine(LangContext context, std::string name, std::vector<std::string> arguments)
+        : Line(context, LineType::FUNCTION_HEADER),
+          name(name), arguments(arguments) {}
+
+    std::string str(){
+        std::ostringstream stream;
+        stream << lineTypeToString(type) << "[" << context.str() << "] " << name;
+        for (auto &arg : arguments){
+            stream << " " << arg;
+        }
         return stream.str();
     }
 };
@@ -309,20 +333,27 @@ struct VerboseParser : Parser {
             case LineType::POP_SCOPE:
             case LineType::NOP:
             case LineType::SET_VAR:
+            case LineType::FUNCTION_END:
             case LineType::PRINT_STACK:
                 lineObj = new Line(context(), type);
                 break;
             case LineType::LINE_COLUMN_NUMBER:
                 {
-                        if (tokens.size() != 2){
-                            error("Expected two arguments");
-                        }
-                        auto _arr = tokenize(tokens[1]);
-                        this->lang_line_number = strToNum<size_t>(_arr[0]);
-                        this->lang_column_number = strToNum<size_t>(_arr[1]);
-                        lineObj = new Line(context(), LineType::NOP);
+                    if (tokens.size() != 2){
+                        error("Expected two arguments");
+                    }
+                    auto _arr = tokenize(tokens[1]);
+                    this->lang_line_number = strToNum<size_t>(_arr[0]);
+                    this->lang_column_number = strToNum<size_t>(_arr[1]);
+                    lineObj = new Line(context(), LineType::NOP);
                 }
                 break;
+            case LineType::FUNCTION_HEADER:
+            case LineType::FUNCTION_HEADER_WO_NAME:
+                if (tokens.size() != 2){
+                    error("Expected arguments");
+                }
+                lineObj = parseFunctionHeader(type, tokens[1]);
             case LineType::ERROR:
             default:
                 error("Don't know what to do with ", line());
@@ -337,6 +368,21 @@ struct VerboseParser : Parser {
             error("Expected Number, got ", str);
         }
         return number;
+    }
+
+    Line *parseFunctionHeader(LineType type, std::string arg_str){
+        std::vector<std::string> arguments;
+        std::string name = "(closure)";
+        std::vector<std::string> arr = {"", arg_str};
+        if (type == LineType::FUNCTION_HEADER){
+            arr = tokenize(arg_str);
+            name = arr[0];
+        }
+        while (arr.size() == 2){
+            arr = tokenize(arr[1]);
+            arguments.push_back(arr[0]);
+        }
+        return new FunctionHeaderLine(context(), name, arguments);
     }
 
     std::string strToString(std::string str){

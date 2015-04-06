@@ -153,6 +153,26 @@ struct Target {
     virtual void POP_SCOPE(){
         std::cout << "POP_SCOPE\n";
     }
+
+    virtual void FUNCTION_HEADER(std::string name, std::vector<std::string> parameters){
+        std::cout << "FUNCTION_HEADER " << name;
+        for (auto &param : parameters){
+            std::cout << " " << param;
+        }
+        std::cout << "\n";
+    }
+
+    virtual void FUNCTION_HEADER_WO_NAME(std::vector<std::string> parameters){
+        std::cout << "CLOSURE_HEADER ";
+        for (auto &param : parameters){
+            std::cout << " " << param;
+        }
+        std::cout << "\n";
+    }
+
+    virtual void FUNCTION_END(){
+        std::cout << "FUNCTION_END\n";
+    }
 };
 
 }

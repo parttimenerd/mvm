@@ -176,6 +176,9 @@ struct Parser {
             node = parseArrayLiteral();
         } else if (is(LEFT_CURLY_BRACKET)){
             node = parseMapLiteral(context());
+        } else if (is(FUNCTION)){
+            next();
+            node = parseFunction();
         } else {
             std::ostringstream stream;
             stream << "Unexpected token " << current()->str();
@@ -366,6 +369,42 @@ struct Parser {
             next();
         }
         return new CallNode(con, func, arguments);
+    }
+
+    Node *parseFunction(){
+        Context con = context();
+        std::vector<std::string> parameters;
+        std::string name = "";
+       if (is(ID)){
+            name = getArgument<std::string>();
+            next();
+        }
+        parse(LEFT_BRACE);
+        parameters = parseFunctionParameters();
+        auto body = parseCodeBlock();
+        if (name.empty()){
+            return new ClousureNode(con, parameters, body);
+        } else {
+            return new FunctionNode(con, name, parameters, body);
+        }
+    }
+
+    std::vector<std::string> parseFunctionParameters(){
+        std::vector<std::string> params;
+        if (is(RIGHT_BRACE)){
+            return params;
+        }
+        parse(ID, false);
+        params.push_back(getArgument<std::string>());
+        next();
+        while (isNot(RIGHT_BRACE)){
+            parse(COMMA);
+            parse(ID, false);
+            params.push_back(getArgument<std::string>());
+            next();
+        }
+        next();
+        return params;
     }
 
     Node* parseVar(){

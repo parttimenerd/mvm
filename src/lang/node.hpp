@@ -392,18 +392,17 @@ struct IfNode : Node {
 
     void compile(Target &target){
         size_t end = target.inventLabel();
-        size_t elseBlock = end;
-        if (elseBody != 0){
-            elseBlock = target.inventLabel();
-        }
+        size_t elseBlock = target.inventLabel();
         condition->compile(target);
         target.PUSH_SCOPE();
         target.JUMP_IF_NOT(elseBlock);
         ifBody->compile(target);
+        target.JUMP(end);
+        target.placeLabel(elseBlock);
         if (elseBody != 0){
-            target.JUMP(end);
-            target.placeLabel(elseBlock);
             elseBody->compile(target);
+        } else {
+            target.PUSH_NOTHING();
         }
         target.POP_SCOPE();
         target.placeLabel(end);
@@ -415,6 +414,43 @@ struct IfNode : Node {
         if (elseBody != 0){
             delete elseBody;
         }
+    }
+};
+
+struct ClousureNode : Node {
+    std::vector<std::string> parameters;
+    Node *body;
+
+    ClousureNode(Context context, std::vector<std::string> parameters, Node *body)
+        : Node(context), parameters(parameters), body(body) {}
+
+    virtual void _compile(Target &target){
+        target.FUNCTION_HEADER_WO_NAME(parameters);
+        body->compile(target);
+        target.FUNCTION_END();
+    }
+
+    virtual ~ClousureNode(){
+        delete body;
+    }
+};
+
+struct FunctionNode : Node {
+    std::string name;
+    std::vector<std::string> parameters;
+    Node *body;
+
+    FunctionNode(Context context, std::string name, std::vector<std::string> parameters, Node *body)
+        : Node(context), name(name), parameters(parameters), body(body) {}
+
+    virtual void _compile(Target &target){
+        target.FUNCTION_HEADER(name, parameters);
+        body->compile(target);
+        target.FUNCTION_END();
+    }
+
+    virtual ~FunctionNode(){
+        delete body;
     }
 };
 
