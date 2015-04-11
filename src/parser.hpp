@@ -30,7 +30,7 @@ enum class LineType : uint8_t {
     COMMENT,
     NOP,
     FUNCTION_HEADER,
-    FUNCTION_HEADER_WO_NAME,
+    CLOSURE_HEADER,
     FUNCTION_END,
     LINE_COLUMN_NUMBER,
     PRINT_STACK,
@@ -62,7 +62,7 @@ static std::vector<std::string> type_names = {
     "COMMENT",
     "NOP",
     "FUNCTION_HEADER",
-    "FUNCTION_HEADER_WO_NAME",
+    "CLOSURE_HEADER",
     "FUNCTION_END",
     "LINE_COLUMN_NUMBER",
     "PRINT_STACK",
@@ -136,6 +136,10 @@ struct Line {
         return lineTypeToString(type);
     }
 
+    virtual Line* copy(){
+        return new Line(context, type);
+    }
+
     virtual ~Line() = default;
 };
 
@@ -147,12 +151,18 @@ struct ArgumentedLine : Line {
     T argument;
 
     ArgumentedLine(LangContext context, LineType type, T argument)
-        : Line(context, type), argument(argument) {}
+        : Line(context, type) {
+        this->argument = argument;
+    }
 
     std::string str(){
         std::ostringstream stream;
         stream << lineTypeToString(type) << "[" << context.str() << "] " << argument;
         return stream.str();
+    }
+
+    virtual Line* copy(){
+        return new ArgumentedLine<T>(context, type, argument);
     }
 };
 
@@ -315,6 +325,7 @@ struct VerboseParser : Parser {
                     error("Expected one argument, got more");
                 }
                 lineObj = new ArgumentedLine<std::string>(context(), type, strToString(tokens[1]));
+                break;
             case LineType::PUSH_BOOLEAN:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
@@ -349,11 +360,12 @@ struct VerboseParser : Parser {
                 }
                 break;
             case LineType::FUNCTION_HEADER:
-            case LineType::FUNCTION_HEADER_WO_NAME:
+            case LineType::CLOSURE_HEADER:
                 if (tokens.size() != 2){
                     error("Expected arguments");
                 }
                 lineObj = parseFunctionHeader(type, tokens[1]);
+                break;
             case LineType::ERROR:
             default:
                 error("Don't know what to do with ", line());

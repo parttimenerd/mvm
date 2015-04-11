@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ENV_HPP
+#define ENV_HPP
 
 #include "utils.hpp"
 #include "heap.hpp"
@@ -116,7 +117,7 @@ struct Env {
      * Add the passed function to the root scope.
      */
     void addFunction(ExceptionContext context, std::string name, size_t parameter_count,
-        std::function<Reference<HeapObject>*(Env*, FunctionArguments)> implFunc, Scope *parent_scope = 0);
+        std::function<Reference<HeapObject>*(Env*, FunctionArguments&)> implFunc, Scope *parent_scope = 0);
 
     Exception* exception(std::string type, std::string message,
                          LangContext context, Reference<HeapObject>* misc = 0, std::string functionName = ""){
@@ -126,3 +127,5 @@ struct Env {
     Exception* exception(Reference<HeapObject>* type, Reference<HeapObject>* message,
                         LangContext context, Reference<HeapObject>* misc = 0, std::string functionName = "");
 };
+
+#endif

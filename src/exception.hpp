@@ -6,7 +6,7 @@
 #include "parser.hpp"
 
 /** Use this to create a context object for CPPFunctions */
-#define CONTEXT(name) ExceptionContext(LangContext(__FILE__, __LINE__, 0), name)
+#define CONTEXT(name) ExceptionContext(LangContext(__FILE__, __LINE__, 0), #name)
 
 struct Env;
 

@@ -58,7 +58,7 @@ Reference<CodeFunction>* Env::createFunction(ExceptionContext context, Scope *pa
     return new Reference<CodeFunction>(this, func, reference);
 }
 
-void Env::addFunction(ExceptionContext context, std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments)> implFunc, Scope *parent_scope){
+void Env::addFunction(ExceptionContext context, std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments&)> implFunc, Scope *parent_scope){
     if (parent_scope == 0){
         parent_scope = root_scope;
     }

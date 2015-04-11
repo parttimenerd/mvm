@@ -18,9 +18,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
 endif()
 
-# ref to add libs: https://sites.google.com/site/boostjp/tips/build_link
-#find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS})
+add_custom_command(
+	OUTPUT ${PROJECT_SOURCE_DIR}/src/stdlib/stdlib.hpp
+	COMMAND ${PROJECT_SOURCE_DIR}/src/stdlib/build.rb
+)
 
 
 ## Generate unit tests in ./test

@@ -15,15 +15,15 @@
 #include "stack.hpp"
 #include "env.hpp"
 #include "parser.hpp"
-#include "stdlib.hpp"
 #include "lang/lexer.hpp"
 #include "lang/parser.hpp"
 #include "exception.hpp"
 
-// TODO add other line types
+#include "stdlib/stdlib.hpp"
 
 void lex();
 void parse();
+void compileAndInterpet();
 
 int main(int argc, char *argv[]){
     if (argc == 2){
@@ -32,6 +32,8 @@ int main(int argc, char *argv[]){
                 lex();
             } else if (std::string(argv[1]) == "parse"){
                 parse();
+            } else if (std::string(argv[1]) == "interpret"){
+                compileAndInterpet();
             }
         } catch (std::string str){
             std::cerr << str;
@@ -40,7 +42,7 @@ int main(int argc, char *argv[]){
         exit(0);
     }
 	Env env;
-    loadStdLib(env);
+    loadStdLib(&env);
     try {
         env.interpret(new VerboseParser(&std::cin));
     } catch (Exception *ex){
@@ -65,6 +67,26 @@ void parse(){
     lang::Parser parser(&lexer);
     lang::Node* node = parser.parse();
     lang::Target target;
-    std::cerr << "\n" << node->str() << "\n";
     node->compile(target);
+}
+
+void compileAndInterpet(){
+    lang::Lexer lexer(&std::cin);
+    lang::Parser parser(&lexer);
+    lang::Node* node = parser.parse();
+    std::ostringstream ostream;
+    lang::Target target(&ostream);
+    node->compile(target);
+    Env env;
+    loadStdLib(&env);
+    std::istringstream istream(ostream.str());
+    try {
+        env.interpret(new VerboseParser(&istream));
+    } catch (Exception *ex){
+        std::cerr << ex->str();
+        exit(1);
+    } catch (std::string str){
+        std::cerr << str;
+        exit(1);
+    }
 }

@@ -277,20 +277,14 @@ struct Parser {
     Node *parseCodeBlock(){
         Context con = context();
         if (is(LEFT_CURLY_BRACKET)){
-            std::cout << __LINE__ << current()->str() << "\n";
             std::vector<Node*> nodes;
             parse(LEFT_CURLY_BRACKET);
-            std::cout << __LINE__ << current()->str() << "\n";
             if (is(RIGHT_CURLY_BRACKET)){
                 next();
-                std::cout << __LINE__ << current()->str() << "\n";
                 return createMapNode(con);
             }
-            std::cout << __LINE__ << current()->str() << "\n";
             ignoreLineBreaks();
-            std::cout << __LINE__ << current()->str() << "\n";
             auto firstExpression = parseExpression();
-            std::cout << __LINE__ << current()->str() << "\n";
             if (isMapKey(firstExpression)){
                 if (is(COLON)){
                     //next();
@@ -298,7 +292,6 @@ struct Parser {
                 }
             }
             ignoreLineBreaks();
-            std::cout << __LINE__ << current()->str() << "\n";
             nodes.push_back(firstExpression);
             while (isNot(RIGHT_CURLY_BRACKET)){
                 nodes.push_back(parseExpression());

@@ -12,19 +12,25 @@ namespace lang {
  */
 struct Target {
 
+    std::ostream *out;
+
+    Target(std::ostream *out) : out(out) {}
+
+    Target() : out(&std::cout) {}
+
     std::vector<size_t> breakLabels;
     std::vector<size_t> continueLabels;
 
     virtual void PUSH_INT(int_type value){
-        std::cout << "PUSH_INT " << value << "\n";
+        *out << "PUSH_INT " << value << "\n";
     }
 
     virtual void PUSH_FLOAT(float_type value){
-        std::cout << "PUSH_FLOAT " << value << "\n";
+        *out << "PUSH_FLOAT " << value << "\n";
     }
 
     virtual void PUSH_STRING(std::string value){
-        std::cout << "PUSH_STRING " << escape(value) << "\n";
+        *out << "PUSH_STRING " << escape(value) << "\n";
     }
 
     std::string escape(std::string str){
@@ -39,23 +45,23 @@ struct Target {
     }
 
     virtual void PUSH_NOTHING(){
-        std::cout << "PUSH_NOTHING\n";
+        *out << "PUSH_NOTHING\n";
     }
 
     virtual void PUSH_BOOLEAN(bool value){
-        std::cout << "PUSH_BOOLEAN " << (value ? "true" : "false") << "\n";
+        *out << "PUSH_BOOLEAN " << (value ? "true" : "false") << "\n";
     }
 
     virtual void PUSH_ARRAY(){
-        std::cout << "PUSH_ARRAY\n";
+        *out << "PUSH_ARRAY\n";
     }
 
     virtual void PUSH_MAP(){
-        std::cout << "PUSH_MAP\n";
+        *out << "PUSH_MAP\n";
     }
 
     virtual void PUSH_VAR(std::string variableName){
-        std::cout << "PUSH_VAR " << variableName << "\n";
+        *out << "PUSH_VAR " << variableName << "\n";
     }
 
     void CALL_N(std::string functionName, size_t numberOfArguments){
@@ -64,7 +70,7 @@ struct Target {
     }
 
     virtual void CALL_N(size_t numberOfArguments){
-        std::cout << "CALL_N " << numberOfArguments << "\n";
+        *out << "CALL_N " << numberOfArguments << "\n";
     }
 
     size_t makeLabel(){
@@ -79,7 +85,7 @@ struct Target {
     }
 
     virtual void placeLabel(size_t label){
-        std::cout << ":" << label << " NOP\n";
+        *out << ":" << label << " NOP\n";
     }
 
     void pushBreakLabel(size_t label){
@@ -115,63 +121,63 @@ struct Target {
     }
 
     virtual void JUMP(size_t label){
-        std::cout << "JUMP " << label << "\n";
+        *out << "JUMP " << label << "\n";
     }
 
     virtual void JUMP_IF(size_t label){
-        std::cout << "JUMP_IF " << label << "\n";
+        *out << "JUMP_IF " << label << "\n";
     }
 
     virtual void JUMP_IF_NOT(size_t label){
-        std::cout << "JUMP_IF_NOT " << label << "\n";
+        *out << "JUMP_IF_NOT " << label << "\n";
     }
 
     virtual void NOP(){
-        std::cout << "NOP\n";
+        *out << "NOP\n";
     }
 
     virtual void DUP(){
-        std::cout << "DUP\n";
+        *out << "DUP\n";
     }
 
     virtual void LINE_COLUMN_NUMBER(size_t lineNumber, size_t columnNumber){
-        std::cout << "LINE_COLUMN_NUMBER " << lineNumber << " " << columnNumber << "\n";
+        *out << "LINE_COLUMN_NUMBER " << lineNumber << " " << columnNumber << "\n";
     }
 
     virtual void SET_VAR(){
-        std::cout << "SET_VAR\n";
+        *out << "SET_VAR\n";
     }
 
     virtual void INIT_VAR(std::string varName){
-        std::cout << "INIT_VAR " << varName << "\n";
+        *out << "INIT_VAR " << varName << "\n";
     }
 
     virtual void PUSH_SCOPE(){
-        std::cout << "PUSH_SCOPE\n";
+        *out << "PUSH_SCOPE\n";
     }
 
     virtual void POP_SCOPE(){
-        std::cout << "POP_SCOPE\n";
+        *out << "POP_SCOPE\n";
     }
 
     virtual void FUNCTION_HEADER(std::string name, std::vector<std::string> parameters){
-        std::cout << "FUNCTION_HEADER " << name;
+        *out << "FUNCTION_HEADER " << name;
         for (auto &param : parameters){
-            std::cout << " " << param;
+            *out << " " << param;
         }
-        std::cout << "\n";
+        *out << "\n";
     }
 
     virtual void FUNCTION_HEADER_WO_NAME(std::vector<std::string> parameters){
-        std::cout << "CLOSURE_HEADER ";
+        *out << "CLOSURE_HEADER ";
         for (auto &param : parameters){
-            std::cout << " " << param;
+            *out << " " << param;
         }
-        std::cout << "\n";
+        *out << "\n";
     }
 
     virtual void FUNCTION_END(){
-        std::cout << "FUNCTION_END\n";
+        *out << "FUNCTION_END\n";
     }
 };
 

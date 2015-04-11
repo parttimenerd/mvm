@@ -3,35 +3,12 @@
 #include "reference.hpp"
 #include "map.hpp"
 #include "exception.hpp"
+#include "function_arguments.hpp"
 
 
 struct Line;
 struct Env;
 struct Function;
-
-struct FunctionArguments {
-    Function *self;
-    std::vector<Reference<HeapObject>*> arguments;
-    std::vector<Reference<HeapObject>*> misc_arguments;
-    std::vector<Reference<HeapObject>*> all_arguments;
-
-    FunctionArguments(Function *self, std::vector<Reference<HeapObject>*> arguments,
-        std::vector<Reference<HeapObject>*> misc_arguments,
-        std::vector<Reference<HeapObject>*> all_arguments){
-        this->self = self;
-        this->arguments = arguments;
-        this->misc_arguments = misc_arguments;
-        this->all_arguments = all_arguments;
-    }
-
-    bool hasMiscArguments(){
-        return !misc_arguments.empty();
-    }
-
-    bool hasTooMuchArguments(){
-        return hasMiscArguments();
-    }
-};
 
 struct Function : Map {
 
@@ -72,10 +49,10 @@ struct CodeFunction : Function {
 
 struct CPPFunction : Function {
 
-    std::function<Reference<HeapObject>*(Env*, FunctionArguments)> impl_func;
+    std::function<Reference<HeapObject>*(Env*, FunctionArguments&)> impl_func;
 
     CPPFunction(Env *env, ExceptionContext location, Scope *parent_scope, size_t parameter_count,
-                std::function<Reference<HeapObject>*(Env *env, FunctionArguments)> impl_func)
+                std::function<Reference<HeapObject>*(Env *env, FunctionArguments&)> impl_func)
         : Function(env, location, parent_scope, parameter_count){
         this->impl_func = impl_func;
     }

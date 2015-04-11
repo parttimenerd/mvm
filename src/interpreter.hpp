@@ -51,7 +51,10 @@ struct Interpreter {
                     env->stack->push(env->map()->transfer());
                     break;
                 case LineType::PUSH_VAR:
-                    env->stack->push(scope->get(toArgLine<std::string>(line)->argument));
+                    {
+                        auto var = scope->get(static_cast<ArgumentedLine<std::string>*>(line)->argument);
+                        env->stack->push(var);
+                    }
                     break;
                 case LineType::SET_VAR:
                     {
@@ -148,7 +151,7 @@ struct Interpreter {
 
     template<typename T>
     ArgumentedLine<T>* toArgLine(Line *line){
-        return static_cast<ArgumentedLine<T>*>(line);
+        return (ArgumentedLine<T>*)line;
     }
 
     /**
@@ -218,7 +221,7 @@ struct Interpreter {
         while (currentPos < code.size() && openHeaderCount != 0){
             switch(currentLine()->type){
                 case LineType::FUNCTION_HEADER:
-                case LineType::FUNCTION_HEADER_WO_NAME:
+                case LineType::CLOSURE_HEADER:
                     openHeaderCount++;
                     break;
                 case LineType::FUNCTION_END:
