@@ -1,3 +1,3 @@
 #! /usr/bin/zsh
 
-./build.sh && ./tests/test.rb
+./build.sh && ./tests/compiler/test.rb

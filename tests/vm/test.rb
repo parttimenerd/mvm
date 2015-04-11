@@ -11,7 +11,7 @@ $errors = 0
 def test file
 	exp_file = file.gsub(".mvm", ".out")
 	fail_file = file.gsub(".mvm", ".fail")
-	res = `#{$dir}/../mvm < #{file}`
+	res = `#{$dir}/../../mvm < #{file}`
 	if File.exists?(fail_file)
 		if $?.exitstatus > 0
 			puts "\032[0;31Test #{file}\033[0m"

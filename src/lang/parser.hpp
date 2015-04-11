@@ -27,6 +27,7 @@ struct Parser {
      */
     std::unordered_map<std::string, infixOp>  infixOperators = {
         {"=", std::make_tuple(20, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new SetVarNode(c, l, r); })},
+        {"+=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("add!"))},
         {":=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("set_direct"))},
         {"func", std::make_tuple(25, LEFT_ASSOC, _funcInfixOperatorNode(""))},
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new OrNode(c, l, r); })},
@@ -55,7 +56,8 @@ struct Parser {
 
     std::unordered_map<std::string, unaryOp>  prefixOperators = {
         {"!", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "not"); }},
-        {"-", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "negate"); }}
+        {"-", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "negate"); }},
+        {"++", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "increment"); }}
     };
 
     std::unordered_map<std::string, unaryOp>  postfixOperators /*= {
@@ -275,20 +277,28 @@ struct Parser {
     Node *parseCodeBlock(){
         Context con = context();
         if (is(LEFT_CURLY_BRACKET)){
+            std::cout << __LINE__ << current()->str() << "\n";
             std::vector<Node*> nodes;
             parse(LEFT_CURLY_BRACKET);
+            std::cout << __LINE__ << current()->str() << "\n";
             if (is(RIGHT_CURLY_BRACKET)){
                 next();
+                std::cout << __LINE__ << current()->str() << "\n";
                 return createMapNode(con);
             }
+            std::cout << __LINE__ << current()->str() << "\n";
             ignoreLineBreaks();
+            std::cout << __LINE__ << current()->str() << "\n";
             auto firstExpression = parseExpression();
+            std::cout << __LINE__ << current()->str() << "\n";
             if (isMapKey(firstExpression)){
                 if (is(COLON)){
                     //next();
                     return parseMapLiteral(con, firstExpression);
                 }
             }
+            ignoreLineBreaks();
+            std::cout << __LINE__ << current()->str() << "\n";
             nodes.push_back(firstExpression);
             while (isNot(RIGHT_CURLY_BRACKET)){
                 nodes.push_back(parseExpression());
@@ -419,6 +429,7 @@ struct Parser {
     std::vector<std::string> parseFunctionParameters(){
         std::vector<std::string> params;
         if (is(RIGHT_BRACE)){
+            next();
             return params;
         }
         parse(ID, false);
