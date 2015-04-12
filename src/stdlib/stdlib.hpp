@@ -253,6 +253,22 @@ void loadStdLib(Env *env){
 		return set_direct(env, args);
 		 
 	});
+	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"), "eval", 1, [](Env *env, FunctionArguments &args){
+		
+		if (args.hasTooMuchArguments()){
+			std::ostringstream stream;
+			stream << "Expected 1 arguments, but got ";
+			stream << args.all_arguments.size();
+			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"));	
+		}
+
+		if (!(args.at(0)->value->type == Type::STRING)){
+			throw new Exception("wrong argument type", "Expected string but got " + args.at(0)->value->str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"));
+		}
+
+		return eval(env, args);
+		 
+	});
 	env->addFunction(ExceptionContext(LangContext(new std::string("logic.hpp"), 17, 0), "not_equal?"), "not_equal?", 2, [](Env *env, FunctionArguments &args){
 		
 		return not_equal(env, args);
