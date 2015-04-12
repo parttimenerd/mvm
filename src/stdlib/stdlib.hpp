@@ -229,44 +229,60 @@ void loadStdLib(Env *env){
 		puts(env, args);
 		return env->snothing().reference; 
 	});
-	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 6, 0), "print_env"), "print_env", 0, [](Env *env, FunctionArguments &args){
+	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 8, 0), "print_env"), "print_env", 0, [](Env *env, FunctionArguments &args){
 		
 		if (args.hasTooMuchArguments()){
 			std::ostringstream stream;
 			stream << "Expected 0 arguments, but got ";
 			stream << args.all_arguments.size();
-			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 6, 0), "print_env"));	
+			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 8, 0), "print_env"));	
 		}
 
 		print_env(env, args);
 		return env->snothing().reference; 
 	});
-	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 13, 0), "set_direct"), "set_direct", 2, [](Env *env, FunctionArguments &args){
+	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 15, 0), "set_direct"), "set_direct", 2, [](Env *env, FunctionArguments &args){
 		
 		if (args.hasTooMuchArguments()){
 			std::ostringstream stream;
 			stream << "Expected 2 arguments, but got ";
 			stream << args.all_arguments.size();
-			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 13, 0), "set_direct"));	
+			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 15, 0), "set_direct"));	
 		}
 
 		return set_direct(env, args);
 		 
 	});
-	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"), "eval", 1, [](Env *env, FunctionArguments &args){
+	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 23, 0), "eval"), "eval", 1, [](Env *env, FunctionArguments &args){
 		
 		if (args.hasTooMuchArguments()){
 			std::ostringstream stream;
 			stream << "Expected 1 arguments, but got ";
 			stream << args.all_arguments.size();
-			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"));	
+			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 23, 0), "eval"));	
 		}
 
 		if (!(args.at(0)->value->type == Type::STRING)){
-			throw new Exception("wrong argument type", "Expected string but got " + args.at(0)->value->str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 21, 0), "eval"));
+			throw new Exception("wrong argument type", "Expected string but got " + args.at(0)->value->str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 23, 0), "eval"));
 		}
 
-		return eval(env, args);
+		return _eval(env, args);
+		 
+	});
+	env->addFunction(ExceptionContext(LangContext(new std::string("utility.hpp"), 44, 0), "system"), "system", 1, [](Env *env, FunctionArguments &args){
+		
+		if (args.hasTooMuchArguments()){
+			std::ostringstream stream;
+			stream << "Expected 1 arguments, but got ";
+			stream << args.all_arguments.size();
+			throw new Exception("too much arguments", stream.str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 44, 0), "system"));	
+		}
+
+		if (!(args.at(0)->value->type == Type::STRING)){
+			throw new Exception("wrong argument type", "Expected string but got " + args.at(0)->value->str(), ExceptionContext(LangContext(new std::string("utility.hpp"), 44, 0), "system"));
+		}
+
+		return _system(env, args);
 		 
 	});
 	env->addFunction(ExceptionContext(LangContext(new std::string("logic.hpp"), 17, 0), "not_equal?"), "not_equal?", 2, [](Env *env, FunctionArguments &args){

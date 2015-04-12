@@ -1,7 +1,9 @@
 #pragma once
 
 #include "utils.hpp"
-
+#include <stdio.h>
+#include <iostream>
+#include <errno.h>
 
 //statement print_env
 
@@ -18,9 +20,9 @@ href_ptr set_direct(Env*, FunctionArguments &args){
     return args.first();
 }
 
-//function eval, 1 | string
+//function eval | _eval, 1 | string
 
-href_ptr eval(Env *env, FunctionArguments &args){
+href_ptr _eval(Env *env, FunctionArguments &args){
     std::istringstream stream(args.first()->as<String>()->value);
     lang::Lexer lexer(&stream);
     lang::Parser parser(&lexer);
@@ -37,4 +39,22 @@ href_ptr eval(Env *env, FunctionArguments &args){
     }
     auto val = env->stack->pop();
     return val;
+}
+
+//function system | _system, 1 | string
+
+href_ptr _system(Env *env, FunctionArguments &args){
+    char *cmd = const_cast<char *>(args.first()->as<String>()->value.c_str());
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) {
+        return env->integer(errno);
+    }
+    char buffer[128];
+    std::string result = "";
+    while(!feof(pipe)) {
+       if(fgets(buffer, 128, pipe) != NULL)
+           result += buffer;
+    }
+    pclose(pipe);
+    return env->string(result);
 }
