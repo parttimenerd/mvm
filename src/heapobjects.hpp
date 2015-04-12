@@ -6,6 +6,7 @@
 #include "nothing.hpp"
 #include "boolean.hpp"
 #include "int.hpp"
+#include "float.hpp"
 #include "string.hpp"
 #include "array.hpp"
 #include "map.hpp"

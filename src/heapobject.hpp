@@ -103,6 +103,23 @@ struct HeapObject {
         return this->type == Type::MAP || this->type == Type::FUNCTION;
     }
 
+    bool isNumeric(){
+        return this->type == Type::INT || this->type == Type::FLOAT;
+    }
+
+    bool isFloat(){
+        return this->type == Type::FLOAT;
+    }
+
+    bool isInt(){
+        return this->type == Type::INT;
+    }
+
+    bool isFunction(){
+        return this->type == Type::FUNCTION;
+    }
+
+
     HeapObject* transfer();
 
 	virtual ~HeapObject() = default;

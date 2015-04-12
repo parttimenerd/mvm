@@ -44,6 +44,12 @@ struct Interpreter {
                         env->stack->push(env->integer(value)->transfer());
                     }
                     break;
+                case LineType::PUSH_FLOAT:
+                    {
+                        float_type value = toArgLine<float_type>(line)->argument;
+                        env->stack->push(env->floating(value)->transfer());
+                    }
+                    break;
                 case LineType::PUSH_ARRAY:
                     env->stack->push(env->array()->transfer());
                     break;
@@ -52,8 +58,10 @@ struct Interpreter {
                     break;
                 case LineType::PUSH_VAR:
                     {
+                        //std::cerr << scope->str_large();
                         auto var = scope->get(static_cast<ArgumentedLine<std::string>*>(line)->argument);
                         env->stack->push(var);
+                        //r << var->str() << "\n";
                     }
                     break;
                 case LineType::SET_VAR:
@@ -169,7 +177,7 @@ struct Interpreter {
     }
 
     void call(size_t numberOfArguments = 99999999999){
-        //std::cerr << currentPos << "aa\n";
+        //r << currentPos << "aa\n";
         if (numberOfArguments == 99999999999){
             Reference<HeapObject>* num = env->stack->pop();
             if (num->value->type == Type::INT){

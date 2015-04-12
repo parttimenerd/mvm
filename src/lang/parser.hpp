@@ -28,6 +28,12 @@ struct Parser {
     std::unordered_map<std::string, infixOp>  infixOperators = {
         {"=", std::make_tuple(20, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new SetVarNode(c, l, r); })},
         {"+=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("add!"))},
+	{"-=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("minus!"))},
+	{"++=", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("add_strings!"))},
+	{"*=", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("multiply!"))},
+        {"/=", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("divide!"))},
+	{"%=", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("modulo!"))},
+        {"**=", std::make_tuple(100, RIGHT_ASSOC, _funcInfixOperatorNode("pow!"))},
         {":=", std::make_tuple(20, LEFT_ASSOC, _funcInfixOperatorNode("set_direct"))},
         {"func", std::make_tuple(25, LEFT_ASSOC, _funcInfixOperatorNode(""))},
         {"||", std::make_tuple(30, LEFT_ASSOC, [](Context c, Node *l, Node *r){ return new OrNode(c, l, r); })},
@@ -36,14 +42,15 @@ struct Parser {
         {"==", std::make_tuple(41, LEFT_ASSOC, _funcInfixOperatorNode("equal?") )},
         {"<", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("less?"))},
         {">", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater?"))},
-        {"<=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater_equal?"))},
+        {"<=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("less_equal?"))},
         {">=", std::make_tuple(42, LEFT_ASSOC, _funcInfixOperatorNode("greater_equal?"))},
+	{"++", std::make_tuple( 50, LEFT_ASSOC, _funcInfixOperatorNode("add_strings"))},
         {"+", std::make_tuple( 50, LEFT_ASSOC, _funcInfixOperatorNode("plus"))},
         {"-", std::make_tuple( 50, LEFT_ASSOC, _funcInfixOperatorNode("minus"))},
         {"*", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("multiply"))},
         {"/", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("divide"))},
         {"%", std::make_tuple(100, LEFT_ASSOC, _funcInfixOperatorNode("modulo"))},
-        {"**", std::make_tuple(100, RIGHT_ASSOC, _funcInfixOperatorNode("power"))}
+        {"**", std::make_tuple(100, RIGHT_ASSOC, _funcInfixOperatorNode("pow"))}
     };
 
     infixOpFunc _funcInfixOperatorNode(std::string name){
@@ -56,8 +63,7 @@ struct Parser {
 
     std::unordered_map<std::string, unaryOp>  prefixOperators = {
         {"!", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "not"); }},
-        {"-", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "negate"); }},
-        {"++", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "increment"); }}
+        {"-", [](Context c, Node* r){ return new UnaryFuncNode(c, r, "negate"); }}
     };
 
     std::unordered_map<std::string, unaryOp>  postfixOperators /*= {

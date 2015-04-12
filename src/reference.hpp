@@ -26,14 +26,14 @@ struct Reference : HeapObject {
 
     std::string str(){
         std::ostringstream stream;
-        stream << "[ref to:" << value->str() << stream << "]";
+        stream << "[ref to:" << ((HeapObject*)value)->str() << stream << "]";
         return stream.str();
     }
 
 
     std::string escapedStr(){
         std::ostringstream stream;
-        stream << "[ref to:" << value->str() << "]";
+        stream << "[ref to:" << ((HeapObject*)value)->str() << "]";
         return stream.str();
     }
 
@@ -62,12 +62,11 @@ struct Reference : HeapObject {
         return this;
     }
 
-    void _set(HeapObject *other){
+    void set(HeapObject *other){
+        auto a = make_sref(value);
         Reference<HeapObject>* ref = (Reference<HeapObject>*)other;
-        if (ref->value->type != value->type){
-            throw std::string("Can't assign variables to changing typed values");
-        }
         value = ref->as<T>();
+        ((HeapObject*)value)->reference();
     }
 
     virtual std::vector<HeapObject*> getReferencedObjects(){

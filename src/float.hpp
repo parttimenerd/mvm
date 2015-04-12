@@ -1,5 +1,5 @@
-#ifndef INT_HPP
-#define INT_HPP
+#ifndef FLOAT_HPP
+#define FLOAT_HPP
 
 #include "utils.hpp"
 
@@ -8,11 +8,11 @@
 /**
  * Int class for integer objects.
  */
-struct Int : HeapObject {
-	int_type value;
+struct Float : HeapObject {
+    float_type value;
 
 
-    Int(Env *env, int_type value) : HeapObject(Type::INT, env) {
+    Float(Env *env, float_type value) : HeapObject(Type::FLOAT, env) {
 		this->value = value;
 	}
 
@@ -23,11 +23,11 @@ struct Int : HeapObject {
 	}
 
     bool operator==(HeapObject &obj) override {
-        return obj.type == type && value == static_cast<Int&>(obj).value;
+        return obj.type == type && value == static_cast<Float&>(obj).value;
 	}
 
     bool operator<(HeapObject &obj) override {
-        return obj.type == type && value < dynamic_cast<Int&>(obj).value;
+        return obj.type == type && value < dynamic_cast<Float&>(obj).value;
 	}
 
     bool toBool(){
@@ -35,11 +35,11 @@ struct Int : HeapObject {
     }
 
     virtual Reference<HeapObject>* copy(){
-        return new Reference<HeapObject>(env, new Int(env, value));
+        return new Reference<HeapObject>(env, new Float(env, value));
     }
 
     virtual void _set(HeapObject *other){
-        value = ((Int*)other)->value;
+        value = ((Float*)other)->value;
     }
 
 };

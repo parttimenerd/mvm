@@ -12,6 +12,7 @@ struct CodeFunction;
 struct HeapObject;
 struct Scope;
 struct Int;
+struct Float;
 struct Nothing;
 struct Array;
 struct Map;
@@ -47,6 +48,15 @@ struct Env {
 
     SmartReference<HeapObject> sinteger(int_type value){
         return make_sref(integer(value));
+    }
+
+    Reference<Float>* createFloat(float_type val, bool reference = true);
+    Reference<HeapObject>* floating(float_type val){
+        return (Reference<HeapObject>*)createFloat(val);
+    }
+
+    SmartReference<HeapObject> sfloating(float_type value){
+        return make_sref(floating(value));
     }
 
     Reference<Nothing>* createNothing(bool reference = true);
@@ -112,6 +122,8 @@ struct Env {
     void interpret(Scope *function_base_scope, std::vector<Line*> code);
 
     void interpret(Parser *parser);
+
+    Reference<HeapObject> * call(std::string functionName, std::vector<Reference<HeapObject>*> args, Scope *scope = 0);
 
     /**
      * Add the passed function to the root scope.

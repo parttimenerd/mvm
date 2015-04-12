@@ -12,6 +12,7 @@ enum class LineType : uint8_t {
     PUSH_NOTHING,
     PUSH_BOOLEAN,
     PUSH_INT,
+    PUSH_FLOAT,
     PUSH_STRING,
     PUSH_ARRAY,
     PUSH_MAP,
@@ -44,6 +45,7 @@ static std::vector<std::string> type_names = {
     "PUSH_NOTHING",
     "PUSH_BOOLEAN",
     "PUSH_INT",
+    "PUSH_FLOAT",
     "PUSH_STRING",
     "PUSH_ARRAY",
     "PUSH_MAP",
@@ -309,6 +311,12 @@ struct VerboseParser : Parser {
                     error("Expected one argument, got more");
                 }
                 lineObj = new ArgumentedLine<int_type>(context(), type, strToNum<int_type>(tokens[1]));
+                break;
+            case LineType::PUSH_FLOAT:
+                if (tokens.size() != 2){
+                    error("Expected one argument, got more");
+                }
+                lineObj = new ArgumentedLine<float_type>(context(), type, strToNum<float_type>(tokens[1]));
                 break;
             case LineType::JUMP:
             case LineType::JUMP_IF:

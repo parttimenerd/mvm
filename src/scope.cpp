@@ -63,9 +63,10 @@ void Scope::setHere(std::string varname, HeapObject* _obj, bool reference){
 
 Reference<HeapObject>* Scope::get(std::string varname, bool returnNothing){
     if (variables.find(varname) != variables.end()){
+        variables[varname]->reference();
         return variables[varname];
     } else if (isRoot){
-        return returnNothing ? (Reference<HeapObject>*)env->createNothing() : 0;
+        return env->nothing();
     } else {
         return parent->get(varname, returnNothing);
     }

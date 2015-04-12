@@ -29,6 +29,11 @@ Reference<Int>* Env::createInt(int_type val, bool reference){
     return new Reference<Int>(this, integer, reference);
 }
 
+Reference<Float>* Env::createFloat(float_type val, bool reference){
+    Float *floating = new Float(this, val);
+    return new Reference<Float>(this, floating, reference);
+}
+
 Reference<Nothing>* Env::createNothing(bool reference){
     return new Reference<Nothing>(this, _nothing, reference);
 }
@@ -80,4 +85,19 @@ void Env::interpret(Scope *function_base_scope, std::vector<Line*> code){
 
 void Env::interpret(Parser *parser){
     interpret(root_scope, parser->lines());
+}
+
+Reference<HeapObject> * Env::call(std::string functionName, std::vector<Reference<HeapObject> *> args, Scope *scope){
+    if (scope == 0){
+        scope = root_scope;
+    }
+    auto val = make_sref(scope->get(functionName));
+    if (val.value->isFunction()){
+        for (auto arg : args){
+            arg->reference();
+        }
+        ((Function*)val.value)->exec(args);
+        return stack->pop();
+    }
+    return val.reference;
 }
