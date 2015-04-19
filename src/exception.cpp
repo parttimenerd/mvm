@@ -1,4 +1,4 @@
-#include "exception.hpp"
+cat#include "exception.hpp"
 #include "parser.hpp"
 #include "heapobjects.hpp"
 #include "env.hpp"
