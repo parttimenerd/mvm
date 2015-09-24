@@ -1,61 +1,109 @@
+#pragma once
+
 #include "utils.hpp"
 #include "scope.hpp"
 #include "reference.hpp"
-#include "map.hpp"
 #include "exception.hpp"
 #include "function_arguments.hpp"
+#include "baseobject.hpp"
 
 
-struct Line;
-struct Env;
-struct Function;
+class Line;
+class Env;
+class Function;
 
-struct Function : Map {
+class Function : public BaseObject {
 
-    ExceptionContext location;
-    Scope *parent_scope;
+protected:
+    ExceptionContext context;
     size_t parameter_count;
 
-    Function(Env *env, ExceptionContext location, Scope *parent_scope, size_t parameter_count);
+public:
+    Function(Env *env, ExceptionContext &context, size_t parameter_count)
+        : BaseObject(env, "Function"), context(context), parameter_count(parameter_count) {}
 
-    virtual void exec(FunctionArguments&){}
+    virtual rref exec(std::vector<rref> &arguments);
 
-    void exec(std::vector<Reference<HeapObject>*> &arguments);
-
-    std::string str(){
-        std::ostringstream stream;
-        stream << "function " << location.context.str() << " with " << parameter_count << " parameters";
-        return stream.str();
+    ExceptionContext getContext(){
+        return context;
     }
 
-    std::vector<HeapObject*> getReferencedObjects() {
-        auto vec = Map::getReferencedObjects();
-        vec.push_back(parent_scope);
-        return vec;
+    bool isFunction(){
+        return true;
+    }
+
+    virtual rref exec(FunctionArguments&);
+
+    size_t parameterCount(){
+        return parameter_count;
     }
 };
 
-struct CodeFunction : Function {
-	std::vector<Line*> lines;
-	std::vector<std::string> parameters;
 
-    CodeFunction(Env *env, ExceptionContext location, Scope *parent_scope,
+class BoundFunction : public Function {
+protected:
+    SmartReference<Function> function;
+    rref this_obj;
+    Optional<std::string> name;
+
+public:
+    BoundFunction(Env *env, ExceptionContext &context,
+                  SmartReference<Function> function, rref this_obj, std::string name = "");
+
+    rref exec(FunctionArguments &args);
+};
+
+class Functional : public Function {
+protected:
+    SmartReference<Scope> parent_scope;
+    std::string name;
+public:
+    Functional(Env *env, ExceptionContext &context,
+             size_t parameter_count, SmartReference<Scope> parent_scope);
+
+    virtual std::string str();
+
+    virtual bref bind(rref this_obj, std::string name = ""){
+        return make_bref<BoundFunction>(env, context, SmartReference<Function>(this), this_obj.copy(), name);
+    }
+
+    SmartReference<Scope> getParentScope(){
+        return parent_scope.copy();
+    }
+};
+
+class CodeFunction : public Functional {
+    std::vector<Line*> lines;
+    std::vector<std::string> parameters;
+
+public:
+    CodeFunction(Env *env, ExceptionContext context, SmartReference<Scope> parent_scope,
                  std::vector<std::string> parameters, std::vector<Line*> lines);
 
-    Scope* initFunctionScope(FunctionArguments &args);
+    SmartReference<Scope> initFunctionScope(FunctionArguments &args);
 
-    void exec(FunctionArguments &args);
+    rref exec(FunctionArguments &args);
 };
 
-struct CPPFunction : Function {
+class CPPFunction : public Functional {
 
-    std::function<Reference<HeapObject>*(Env*, FunctionArguments&)> impl_func;
+    std::function<rref(FunctionArguments&)> impl_func;
 
-    CPPFunction(Env *env, ExceptionContext location, Scope *parent_scope, size_t parameter_count,
-                std::function<Reference<HeapObject>*(Env *env, FunctionArguments&)> impl_func)
-        : Function(env, location, parent_scope, parameter_count){
-        this->impl_func = impl_func;
-    }
+public:
+    CPPFunction(Env *env, ExceptionContext context, SmartReference<Scope> parent_scope, size_t parameter_count,
+                std::function<rref(FunctionArguments&)> impl_func)
+        : Functional(env, context, parameter_count, parent_scope), impl_func(impl_func) {}
 
-    void exec(FunctionArguments &arg);
+    rref exec(FunctionArguments &arg);
+};
+
+struct FunctionTuple {
+    ExceptionContext context;
+    std::string name;
+    size_t param_count;
+    std::function<rref(FunctionArguments &)> impl_func;
+
+    FunctionTuple(ExceptionContext context, std::string name, size_t param_count,
+                  std::function<rref(FunctionArguments &)> impl_func)
+        : context(context), name(name), param_count(param_count), impl_func(impl_func) {}
 };

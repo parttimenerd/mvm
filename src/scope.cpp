@@ -2,73 +2,77 @@
 
 #include "scope.hpp"
 #include "heap.hpp"
-#include "heapobjects.hpp"
+#include "heapobject.hpp"
+#include "reference.hpp"
+#include "env.hpp"
 
-Scope::Scope(Env *env, Scope *scope) : HeapObject(Type::SCOPE, env) {
-    parent = scope;
-    if (scope == 0){
-        isRoot = true;
-    }
+Scope::Scope(Env *env, SmartReference<Scope> parent_scope) : HeapObject(env, Type::SCOPE) {
+    _parent = Optional<SmartReference<Scope>>(parent_scope);
 }
 
-void Scope::set(std::string varname, HeapObject* _obj, bool reference){
-    Reference<HeapObject>* obj = toReference(_obj);
+Scope::Scope(Env *env) : HeapObject(env, Type::SCOPE) {
+    L
+    _parent = Optional<SmartReference<Scope>>();
+    L
+}
+
+SmartReference<Scope> Scope::root(){
+    if (isRoot()){
+        return SmartReference<Scope>(this);
+    }
+    return parent()->root();
+}
+
+bool Scope::isRoot(){
+    return !_parent.has();
+}
+
+
+SmartReference<Scope> Scope::parent(){
+    if (!_parent.has()){
+        throw std::string("Scope has no parent");
+    }
+    return _parent.value().copy();
+}
+
+void Scope::set(std::string varname, bref obj){
+    set(varname, to_rref(obj));
+}
+
+void Scope::set(std::string varname, rref obj){
     bool hasSelf = variables.find(varname) != variables.end();
     bool hasWhole = has(varname);
     if (hasWhole && !hasSelf){
-        parent->set(varname, obj, reference);
-    }
-    if (hasWhole && hasSelf){
-        if (obj != variables[varname]){
-            variables[varname]->dereference();
-            if (reference){
-                obj->reference();
-            }
-        }
-        variables[varname] = obj;
-    }
-    if (!hasWhole){
-        variables[varname] = obj;
-        if (reference){
-            obj->reference();
-        }
+        parent()->set(varname, obj.copy());
+    } else {
+        variables.emplace(varname, obj.copy());
     }
 }
 
 void Scope::initVar(std::string varname){
     bool hasSelf = variables.find(varname) != variables.end();
     if (!hasSelf){
-        variables[varname] = env->nothing();
+        variables.emplace(varname, env->rnothing());
     }
 }
 
-void Scope::setHere(std::string varname, HeapObject* _obj, bool reference){
-    Reference<HeapObject> *obj = toReference(_obj);
+void Scope::setHere(std::string varname, rref obj){
     bool hasSelf = variables.find(varname) != variables.end();
     if (hasSelf){
-        if (obj != variables[varname]){
-            variables[varname]->dereference();
-            if (reference){
-                obj->reference();
-            }
-        }
-        variables[varname] = obj;
+        variables.emplace(varname, obj.copy());
     } else {
-        variables[varname] = obj;
-        if (reference){
-            obj->reference();
-        }
+        variables.emplace(varname, obj.copy());
     }
 }
 
-Reference<HeapObject>* Scope::get(std::string varname, bool returnNothing){
+rref Scope::get(std::string varname){
     if (variables.find(varname) != variables.end()){
         variables[varname]->reference();
-        return variables[varname];
-    } else if (isRoot){
-        return env->nothing();
+        return variables[varname].copy();
+    } else if (isRoot()){
+        return env->rnothing();
     } else {
-        return parent->get(varname, returnNothing);
+        return parent()->get(varname).copy();
     }
 }
 
@@ -76,17 +80,15 @@ bool Scope::has(std::string varname, bool recursive){
     if (variables.find(varname) != variables.end()){
         return true;
     }
-    if (isRoot || !recursive){
+    if (isRoot() || !recursive){
         return false;
     } else {
-        return parent->has(varname);
+        return parent()->has(varname);
     }
 }
 
-Scope* Scope::createChild(){
-    Scope *scope = new Scope(env, this);
-    scope->reference();
-    return scope;
+SmartReference<Scope> Scope::createChild(){
+    return make_sref<Scope>(env, SmartReference<Scope>(this));
 }
 
 std::string Scope::str(){
@@ -101,10 +103,10 @@ std::string Scope::str_large(){
     for (auto t : variables){
         stream << " " << t.first
                << "=" << t.second->escapedStr()
-               << ", ref count=" << t.second->reference_count << "\n";
+               << "\n";
     }
-    if (!isRoot){
-        stream << "-> " << parent->str_large();
+    if (!isRoot()){
+        stream << "-> " << parent()->str_large();
     }
     return stream.str();
 }

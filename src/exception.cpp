@@ -1,43 +1,44 @@
-cat#include "exception.hpp"
-#include "parser.hpp"
-#include "heapobjects.hpp"
+#include "exception.hpp"
 #include "env.hpp"
 #include "reference.hpp"
+#include "utils.hpp"
+#include "scope.hpp"
+
+ExceptionContext::ExceptionContext(LineContext context)
+    : _context(context) {}
+
+ExceptionContext::ExceptionContext(LineContext context, std::string functionName)
+    : _context(context){
+    L
+    if (functionName != ""){
+        this->functionName = Optional<std::string>(functionName);
+    }
+    L
+}
 
 ExceptionContext::ExceptionContext(LangContext context, std::string functionName)
-    : context(context), functionName(functionName) {}
+    : ExceptionContext(LineContext(context.fileName(), context.lineNumber, context.columnNumber), functionName)
+{}
 
 std::string ExceptionContext::str(){
     std::ostringstream stream;
-    if (hasFunctionName()){
-        stream << functionName << "|";
+    if (functionName.has()){
+        stream << functionName.value() << "|";
     }
-    stream << context.str();
+    stream << _context.str();
     return stream.str();
 }
 
-Reference<HeapObject> *ExceptionContext::toHeapObject(Env *env){
-    std::map<HeapObject*, Reference<HeapObject>*> obj;
-    obj[env->sstring("line").value]
-            = env->sinteger((int_type)context.lineNumber).reference;
-    obj[env->sstring("column").value]
-            = env->sinteger((int_type)context.columnNumber).reference;
-    obj[env->sstring("functionName").value]
-            = env->sstring(context.fileName()).reference;
-    if (hasFunctionName()){
-        obj[env->sstring("functionName").value]
-                = env->sstring(functionName).reference;
-    }
-    return env->map(obj);
+Exception::Exception(std::string type, std::string message,
+                     ExceptionContext origin)
+    : type(type), message(message) {
+    trace.push_back(origin);
 }
 
 Exception::Exception(std::string type, std::string message,
-                     ExceptionContext origin, Reference<HeapObject>* misc)
-    : type(type), message(message), misc(misc){
-    trace.push_back(origin);
-    if (misc != 0){
-        misc->reference();
-    }
+                     ExceptionContext origin, rref misc)
+    : Exception(type, message, origin){
+    this->misc = Optional<rref>(misc);
 }
 
 void Exception::addContext(ExceptionContext context){
@@ -51,21 +52,4 @@ std::string Exception::str(){
         stream << "\n\t at " + item.str();
     }
     return stream.str();
-}
-
-Reference<HeapObject> *Exception::toHeapObject(Env *env){
-    std::map<HeapObject*, Reference<HeapObject>*> obj;
-    obj[env->sstring("type").value]
-            = env->sstring(type).reference;
-    obj[env->sstring("message").value]
-            = env->sstring(message).reference;
-    if (misc != 0){
-        obj[env->sstring("misc").value] = misc;
-    }
-    std::vector<Reference<HeapObject>*> traceObjs;
-    for (auto &item : trace){
-        traceObjs.push_back(item.toHeapObject(env));
-    }
-    obj[env->sstring("trace").value] = env->sarray(traceObjs).reference;
-    return env->map(obj);
 }

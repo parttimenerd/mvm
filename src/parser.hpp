@@ -3,12 +3,9 @@
 #include "utils.hpp"
 #include <istream>
 
-#define L std::cout << __LINE__ << "\n";
-
 enum class LineType : uint8_t {
     CALL,
     CALL_N,
-    CALL_N2,
     PUSH_NOTHING,
     PUSH_BOOLEAN,
     PUSH_INT,
@@ -19,6 +16,8 @@ enum class LineType : uint8_t {
     PUSH_VAR,
     SET_VAR,
     INIT_VAR,
+    GET_OBJ,
+    SET_OBJ,
     POP,
     DUP,
     JUMP_IF,
@@ -34,14 +33,12 @@ enum class LineType : uint8_t {
     CLOSURE_HEADER,
     FUNCTION_END,
     LINE_COLUMN_NUMBER,
-    PRINT_STACK,
-    ASSERT_STACK_HEIGHT
+    PRINT_STACK
 };
 
 static std::vector<std::string> type_names = {
     "CALL",
     "CALL_N",
-    "CALL_N2",
     "PUSH_NOTHING",
     "PUSH_BOOLEAN",
     "PUSH_INT",
@@ -52,6 +49,8 @@ static std::vector<std::string> type_names = {
     "PUSH_VAR",
     "SET_VAR",
     "INIT_VAR",
+    "GET_OBJ",
+    "SET_OBJ",
     "POP",
     "DUP",
     "JUMP_IF",
@@ -68,7 +67,6 @@ static std::vector<std::string> type_names = {
     "FUNCTION_END",
     "LINE_COLUMN_NUMBER",
     "PRINT_STACK",
-    "ASSERT_STACK_HEIGHT"
 };
 
 static std::string lineTypeToString(LineType type){
@@ -124,7 +122,7 @@ struct LangContext {
  */
 struct Line {
     LangContext context;
-	LineType type;
+    LineType type;
 
     Line(LangContext context, LineType type) : context(context), type(type) {}
 
@@ -300,7 +298,6 @@ struct VerboseParser : Parser {
         Line *lineObj = 0;
         switch (type){
             case LineType::CALL_N:
-            case LineType::ASSERT_STACK_HEIGHT:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -329,6 +326,8 @@ struct VerboseParser : Parser {
             case LineType::PUSH_STRING:
             case LineType::PUSH_VAR:
             case LineType::INIT_VAR:
+            case LineType::GET_OBJ:
+            case LineType::SET_OBJ:
                 if (tokens.size() != 2){
                     error("Expected one argument, got more");
                 }
@@ -347,7 +346,6 @@ struct VerboseParser : Parser {
             case LineType::DUP:
             case LineType::POP:
             case LineType::CALL:
-            case LineType::CALL_N2:
             case LineType::PUSH_SCOPE:
             case LineType::POP_SCOPE:
             case LineType::NOP:

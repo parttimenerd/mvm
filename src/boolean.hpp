@@ -2,36 +2,41 @@
 #define BOOLEAN_HPP
 
 #include "utils.hpp"
+#include "baseobject.hpp"
 
-#include "heapobject.hpp"
+/**
+ * @brief The Boolean class
+ */
+class Boolean : public BaseObject {
+protected:
+    bool _value;
 
-struct Boolean : HeapObject {
+public:
+    Boolean(Env *env) : BaseObject(env, "String"), _value(false) {}
+    Boolean(Env *env, bool value) : BaseObject(env, "String"), _value(value) {}
 
-    bool isTrue;
-
-    Boolean(Env *env, bool isTrue) : HeapObject(Type::BOOLEAN, env) {
-        this->isTrue = isTrue;
-	}
-
-	std::string str(){
-		return isTrue ? "true" : "false";
-	}
-
-    bool operator==(HeapObject &obj){
-        return obj.type == type && ((Boolean*)&obj)->isTrue == this->isTrue;
-	}
-
-    bool toBool(){
-        return isTrue;
+    std::string str(){
+        return _value ? "true" : "false";
     }
 
-    virtual Reference<HeapObject>* copy(){
-        return (Reference<HeapObject>*)new Reference<Boolean>(env, new Boolean(env, isTrue));
+    bool value(){
+        return _value;
     }
 
-    virtual void _set(HeapObject *other){
-        isTrue = ((Boolean*)other)->isTrue;
+    bref virtual clone(){
+        bref cloned = make_bref<Boolean>(env, _value);
+        copyMembers(cloned);
+        return cloned;
+    }
+
+protected:
+    bool _equals(bref other) {
+        return to_bool(other) == _value;
+    }
+
+    void _setDirect(bref other) {
+        _value = to_bool(other);
     }
 };
 
-#endif
+#endif // BOOLEAN_HPP

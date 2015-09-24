@@ -2,74 +2,77 @@
 
 #include "utils.hpp"
 
-/*template<class T>
-struct Reference;
-template<class T>
-struct SmartReference;*/
-#include "reference.hpp"
+/**
+ * @brief The value stack of this vm.
+ * It supports stack frames.
+ *
+ * Actually it stores SmartReference<Reference> objects.
+ */
+class Stack {
 
-struct Stack {
+    std::vector<rref> stack;
+    std::vector<size_t> frame_stack;
 
-    std::vector<Reference<HeapObject>*> stack;
-    std::vector<size_t> frameStack;
+public:
+    /**
+     * @brief Pop a value from the stack
+     * @throws runtime expcetion if the stack is empty
+     * @return topmost value of the stack
+     */
+    rref pop();
 
-    Reference<HeapObject>* pop(bool dereference = false);
+    /**
+     * @brief Pushes the passed reference on the stack.
+     * @param value reference value
+     */
+    void push(rref value);
 
-    void popAndDeref();
-
-    template<class T>
-    void push(Reference<T> *obj, bool reference = true){
-        stack.push_back((Reference<HeapObject>*)obj);
-        if (reference){
-            obj->reference();
-        }
-    }
-
-    template<class T>
-    void push(SmartReference<T> &obj){
-        push(obj.reference);
-    }
-
+    /**
+     * @brief Duplicates the topmost stack element on the stack.
+     * @throws runtime expcetion if the stack is empty
+     */
     void dup();
 
-	bool empty(){
-		return stack.size() == 0;
-	}
-
-	size_t size(){
-		return stack.size();
-	}
-
-    void pushFrame(){
-        frameStack.push_back(size());
+    /**
+     * @brief Is the stack empty?
+     * @return stack empty?
+     */
+    bool empty(){
+        return stack.size() == 0;
     }
 
-    void popFrame(bool dereference = false){
-        size_t newSize = 0;
-        if (frameStack.size() > 0){
-            newSize = frameStack.at(frameStack.size() - 1);
-            frameStack.pop_back();
-        }
-        cleanToSize(newSize, dereference);
+    /**
+     * @brief Get the height of stack
+     * @return stack height
+     */
+    size_t size(){
+        return stack.size();
     }
 
-    void popFrameAndAddReturn(Reference<HeapObject> *returnVal, bool dereference = false, bool reference = true){
-        popFrame(dereference);
-        push(returnVal, reference);
-    }
+    /**
+     * @brief Push a frame on the frame stack
+     */
+    void pushFrame();
 
-    bool hasStackFrames(){
-        return frameStack.size() > 0;
+    /**
+     * @brief Pop a frame from the frame stack.
+     * And pop the associated stack elements.
+     * @throws runtime expcetion if the stack is empty
+     */
+    void popFrame();
+
+    /**
+     * @brief Is the frame stack empty?
+     * @return frame stack empty?
+     */
+    bool frameStackEmpty(){
+        return frame_stack.size() > 0;
     }
 
     /**
      * Clean the stack so it has the passed size.
      */
-    void cleanToSize(size_t _size, bool dereference = false){
-        while (size() > _size){
-            pop(dereference);
-        }
-    }
+    void cleanToSize(size_t _size);
 
     std::string str();
 };

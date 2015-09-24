@@ -3,133 +3,47 @@
 
 #include "utils.hpp"
 #include "heapobject.hpp"
-#include <typeinfo>
+#include "smartreference.hpp"
 
+class Env;
 
 /**
- * A simple reference.
+ * A simple reference containing a SmartReference to an object.
  */
-template<class T>
-struct Reference : HeapObject {
+class Reference : public HeapObject {
 
-    //typedef typename std::enable_if<std::is_base_of<HeapObject, T>::value>::type check;
+    bref _value;
 
-    T *value;
+public:
+    Reference(bref value);
 
-    Reference(Env *env, T *value, bool reference = true) : HeapObject(Type::REFERENCE, env){
-        this->value = value;
-        if (reference){
-            value->reference();
-        }
-        reference_count = 1;
-    }
+    std::string str();
 
-    std::string str(){
-        std::ostringstream stream;
-        stream << "[ref to:" << ((HeapObject*)value)->str() << stream << "]";
-        return stream.str();
-    }
-
-
-    std::string escapedStr(){
-        std::ostringstream stream;
-        stream << "[ref to:" << ((HeapObject*)value)->str() << "]";
-        return stream.str();
-    }
-
-    bool operator==(T&){
-		return false;
-	}
-
-    bool operator>(T&){
-		return false;
-	}
-
-    void foo(){ // only needed to tell the compiler, that T should be a subclass of HeapObject
-        (void)static_cast<HeapObject>(*value);
-    }
+    std::string escapedStr();
 
     template<typename S>
-    S* as(){
-        return (S*)value;
+    SmartReference<S> as(){
+        return SmartReference<S>((S*)(_value.get()));
     }
 
-    Reference<T>* transfer(){
-        if (reference_count == 0){
-            throw std::string("Ref count of ") + escapedStr() + std::string(" is 0, can't reduce it");
-        }
-        reference_count--;
-        return this;
+    void set(bref other){
+        _value = other;
     }
 
-    void set(HeapObject *other){
-        auto a = make_sref(value);
-        Reference<HeapObject>* ref = (Reference<HeapObject>*)other;
-        value = ref->as<T>();
-        ((HeapObject*)value)->reference();
-    }
+    virtual std::vector<href> getReferencedObjects();
 
-    virtual std::vector<HeapObject*> getReferencedObjects(){
-        return {value};
+    bref value(){
+        return _value;
     }
 };
 
 /**
- * A reference wrapper derefencing the wrapped reference if it's going out of scope.
+ * @brief Creates a new T object and places it into a rref.
  */
-template<class T>
-struct SmartReference {
-    Reference<T> *reference;
-    T* value;
-
-    SmartReference(Reference<T> *ref){
-        reference = ref;
-        value = ref->value;
-    }
-
-    ~SmartReference(){
-        reference->dereference();
-    }
-
-
-};
-
-template<class T>
-SmartReference<T> make_sref(Reference<T> *ref){
-    return SmartReference<T>(ref);
+template<typename T, typename... Args>
+rref make_rref(Args... parameters){
+    return rref(new Reference(SmartReference<BaseObject>(new T(parameters...))));
 }
 
-template<class T>
-SmartReference<T> make_sref(T *_obj){
-    HeapObject *obj = static_cast<HeapObject*>(_obj);
-    if (obj->isReference()){
-        return SmartReference<T>((Reference<T>*)_obj);
-    } else {
-        return SmartReference<T>(new Reference<T>(obj->env, _obj));
-    }
-}
-
-/**
- * @brief Wrap an object into a reference object, if it isn't already a reference
- *
- * @param obj
- * @return
- */
-template<class T>
-Reference<T>* toReference(T* obj){
-    while(obj->isReference() && ((Reference<T>*)obj)->value->isReference()){
-        obj = ((Reference<T>*)obj)->value;
-    }
-    if (!obj->isReference()){
-        obj = new Reference<T>(obj->env, obj);
-    }
-    return (Reference<T>*)obj;
-}
-
-
-template<class T>
-SmartReference<T>* toSmartReference(T* obj){
-    return make_sref(toReference(obj));
-}
 
 #endif

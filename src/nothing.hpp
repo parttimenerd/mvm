@@ -2,27 +2,24 @@
 #define NOTHING_HPP
 
 #include "utils.hpp"
+#include "baseobject.hpp"
 
-#include "heapobject.hpp"
+/**
+ * @brief The Nothing class
+ * The 'nothing' is comparable to 'nil' in ruby or 'undefined' in JavaScript.
+ */
+class Nothing : public BaseObject {
+public:
+    Nothing(Env *env) : BaseObject(env, "Nothing") {}
 
-struct Nothing : HeapObject {
-	Nothing(Env *env) : HeapObject(Type::NOTHING, env) {}
-
-	std::string str(){
-		return "nothing";
-	}
-
-    bool operator==(HeapObject &obj){
-        return obj.type == type;
-	}
-
-    bool toBool(){
-        return false;
+    std::string str(){
+        return "nothing";
     }
 
-    virtual Reference<HeapObject>* copy(){
-        return (Reference<HeapObject>*)new Reference<Nothing>(env, new Nothing(env));
+protected:
+    bool _equals(bref){
+        return true;
     }
 };
 
-#endif
+#endif // NOTHING_HPP

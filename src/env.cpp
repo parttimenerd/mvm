@@ -1,103 +1,100 @@
 #include "utils.hpp"
 
 #include "env.hpp"
+#include "classes.hpp"
+#include "heap.hpp"
 #include "scope.hpp"
 #include "reference.hpp"
-#include "heapobjects.hpp"
 #include "interpreter.hpp"
 #include "parser.hpp"
+#include "string.hpp"
+#include "function.hpp"
+#include "nothing.hpp"
+#include "exception.hpp"
+#include "boolean.hpp"
+#include "class.hpp"
 
-Env::Env(){
-    heap = new Heap();
-    stack = new Stack();
-    root_scope = new Scope(this);
-    root_scope->reference();
+Env::Env() {
+    L
+    _heap = std::make_unique<Heap>(this);
+    L
+    _stack = std::make_unique<Stack>();
+    L
+    _root_scope = new Scope(this);
+    _root_scope->reference();
+    L
+    initClasses(this);
+    L
     _nothing = new Nothing(this);
+    L
     _nothing->reference();
+    L
+
+    L
 }
 
-void Env::dereference(HeapObject *obj){
-    heap->dereference(obj);
+bref Env::codeFunction(ExceptionContext context, SmartReference<Scope> parent_scope, std::vector<std::string> parameters, std::vector<Line *> lines){
+    return make_bref<CodeFunction>(this, context, parent_scope, parameters, lines);
 }
 
-void Env::add(HeapObject *obj){
-    heap->add(obj);
+rref Env::rcppFunction(ExceptionContext context, size_t parameter_count, std::function<rref (FunctionArguments &)> implFunc, SmartReference<Scope> parent_scope){
+    return to_rref(cppFunction(context, parent_scope, parameter_count, implFunc));
 }
 
-Reference<Int>* Env::createInt(int_type val, bool reference){
-    Int *integer = new Int(this, val);
-    return new Reference<Int>(this, integer, reference);
+bref Env::cppFunction(ExceptionContext context, SmartReference<Scope> parent_scope, size_t parameter_count, std::function<rref (FunctionArguments &)> implFunc){
+    return make_bref<CPPFunction>(this, context, parent_scope, parameter_count, implFunc);
 }
 
-Reference<Float>* Env::createFloat(float_type val, bool reference){
-    Float *floating = new Float(this, val);
-    return new Reference<Float>(this, floating, reference);
-}
-
-Reference<Nothing>* Env::createNothing(bool reference){
-    return new Reference<Nothing>(this, _nothing, reference);
-}
-
-Reference<Array>* Env::createArray(std::vector<Reference<HeapObject>*> value, bool reference){
-    Array* arr = new Array(this, value, reference);
-    return new Reference<Array>(this, arr, reference);
-}
-
-Reference<Map>* Env::createMap(std::map<HeapObject*, Reference<HeapObject>*> value, bool reference){
-    Map* map = new Map(this, value, reference);
-    return new Reference<Map>(this, map, reference);
-}
-
-Reference<Boolean>* Env::createBoolean(bool isTrue, bool reference){
-    Boolean* boolean = new Boolean(this, isTrue);
-    return new Reference<Boolean>(this, boolean, reference);
-}
-
-Reference<String>* Env::createString(std::string value, bool reference){
-    String* str = new String(this, value);
-    return new Reference<String>(this, str, reference);
-}
-
-Reference<CodeFunction>* Env::createFunction(ExceptionContext context, Scope *parent_scope, std::vector<std::string> parameters, std::vector<Line*> lines, bool reference){
-    CodeFunction *func = new CodeFunction(this, context, parent_scope, parameters, lines);
-    return new Reference<CodeFunction>(this, func, reference);
-}
-
-void Env::addFunction(ExceptionContext context, std::string name, size_t parameter_count, std::function<Reference<HeapObject>*(Env*, FunctionArguments&)> implFunc, Scope *parent_scope){
-    if (parent_scope == 0){
-        parent_scope = root_scope;
-    }
-    auto *obj = new CPPFunction(this, context, parent_scope, parameter_count, implFunc);
-    root_scope->set(name, obj);
-}
-
-Exception *Env::exception(Reference<HeapObject> *type, Reference<HeapObject> *message, LangContext context, Reference<HeapObject> *misc, std::string functionName){
+/*Exception *Env::exception(rref type, rref message, LangContext context, rref misc, std::string functionName){
     if (type->value->is(Type::STRING) && message->value->is(Type::STRING)){
         return new Exception(type->as<String>()->value, message->as<String>()->value, ExceptionContext(context, functionName), misc);
     }
     return new Exception("wrong type", "wrong argument types for throw", ExceptionContext(context, functionName), misc);
-}
+}*/
 
-void Env::interpret(Scope *function_base_scope, std::vector<Line*> code){
+void Env::interpret(SmartReference<Scope> function_base_scope, std::vector<Line*> code){
     Interpreter inter(this, function_base_scope, code);
     inter.interpret();
 }
 
 void Env::interpret(Parser *parser){
-    interpret(root_scope, parser->lines());
+    interpret(rootScope(), parser->lines());
 }
 
-Reference<HeapObject> * Env::call(std::string functionName, std::vector<Reference<HeapObject> *> args, Scope *scope){
-    if (scope == 0){
-        scope = root_scope;
-    }
-    auto val = make_sref(scope->get(functionName));
-    if (val.value->isFunction()){
-        for (auto arg : args){
-            arg->reference();
-        }
-        ((Function*)val.value)->exec(args);
-        return stack->pop();
-    }
-    return val.reference;
+void Env::addToRootScope(std::string name, rref obj){
+    rootScope()->set(name, obj);
+}
+
+rref Env::rnothing(){
+    return to_rref(SmartReference<BaseObject>(_nothing)).copy();
+}
+
+bref Env::nothing(){
+    return bref(_nothing);
+}
+
+rref Env::rstring(std::string str){
+    return make_rref<String>(this, str);
+}
+
+rref Env::rboolean(bool boolean){
+    return make_rref<Boolean>(this, boolean);
+}
+
+bref Env::createClass(std::string name, std::vector<FunctionTuple> class_funcs, std::vector<FunctionTuple> member_funcs, std::string parent){
+    L
+    SmartReference<Class> ref = make_sref<Class>(this, rootScope().copy(), name, std::map<std::string, bref>(), getClass(parent));
+    L
+    ref->setFunctionMembers(member_funcs);
+    ref->setClassFunctions(class_funcs);
+    addToRootScope(name, ref.toRRef());
+    return ref.toRRef().getVal();
+}
+
+SmartReference<Class> Env::getClass(std::string name){
+    return getClass(name, rootScope());
+}
+
+SmartReference<Class> Env::getClass(std::string name, SmartReference<Scope> scope){
+    return scope->get(name)->as<Class>();
 }

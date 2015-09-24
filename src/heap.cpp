@@ -1,39 +1,33 @@
 #include "utils.hpp"
 
 #include "heap.hpp"
-#include "heapobjects.hpp"
+#include "heapobject.hpp"
 
-void Heap::dereference(HeapObject *object){
-	if (object->reference_count == 0 || --(object->reference_count) == 0){
-		for (auto *obj : object->getReferencedObjects()){
-			dereference(obj);
-		}
-		delete object;
-		heap.erase(object->id);
-	}
+void Heap::dereference(HeapObject *obj){
+    L
+    if (obj->refCount() == 0 || obj->decrRefCount() == 0){
+        for (auto _obj : obj->getReferencedObjects()){
+            dereference(_obj.get());
+        }
+        L
+        std::cerr << "delete " << obj->id() << "[" << obj->refCount() << "]\n";
+        delete obj;
+        heap.erase(obj->id());
+    }
 }
 
 std::string Heap::str(){
     std::ostringstream stream;
     stream << "heap count=" << heap.size() << "\n";
-    for (auto t : this->heap){
+    for (auto &t : this->heap){
         stream << " " << t.first << ":"
                << "value=" << t.second->escapedStr()
-               << ", ref count=" << t.second->reference_count << "\n";
+               << ", ref count=" << t.second->refCount() << "\n";
     }
     return stream.str();
 
 }
 
 void Heap::add(HeapObject *obj){
-    obj->id = max_id;
-    max_id++;
-    heap.emplace(obj->id, obj);
-}
-
-
-Heap::~Heap(){
-    //for (auto t : this->heap){
-        //heap.erase(t.second->id);
-    //}
+    heap.emplace(obj->id(), std::unique_ptr<HeapObject>(obj));
 }

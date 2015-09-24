@@ -2,125 +2,105 @@
 
 #include "utils.hpp"
 
-struct Env;
-template<class T>
-struct Reference;
+class Env;
+class Reference;
 
-/** Types */
-enum class Type : id_type {
-	NOTHING,
-	INT,
-	FLOAT,
-	STRING,
-	BOOLEAN,
-	MAP,
-	ARRAY,
-	SCOPE,
-    FUNCTION,
-    REFERENCE
+enum class Type {
+    OBJECT,
+    CLASS,
+    META_CLASS,
+    META_META_CLASS,
+    REFERENCE,
+    SCOPE
 };
 
 /**
- * Base class for simple heap objects.
+ * @brief The base class for objects placed on the heap.
+ *
+ * It implements basic methods needed for garbage collection and provides
+ * helper methods for extending classes.
  */
-struct HeapObject {
-	Type type;
-	id_type id;
-	uint32_t reference_count = 0;
+class HeapObject {
 
-    Env *env;
+protected:
+    Type type;
+    id_type _id;
+    counter_type ref_count = 0;
 
-	/**
-	 * Initialize a new HeapObject in the passed environment
-	 *
-	 * @param type type of the object (@see Type)
-	 * @param env passed environment
-	 */
-    HeapObject(Type type, Env *env);
+    Env *env; /**< using a pointer here is okay, as this object doesn't own env */
 
-	virtual std::string str(){
-		return "";
-	}
+public:
+
+    HeapObject(Env *env, Type type = Type::OBJECT);
+
+    /**
+     * @brief Decrement the reference count and do some garbage collection.
+     */
+    void dereference();
+
+    /**
+     * @brief Increase the reference count
+     */
+    void reference();
+
+    /**
+     * @brief Get the id of this object.
+     * @return id
+     */
+    id_type id(){
+        return _id;
+    }
+
+    /**
+     * @brief Get the reference count of this object.
+     * @return reference count
+     */
+    counter_type refCount(){
+        return ref_count;
+    }
+
+    counter_type decrRefCount(){
+        return --ref_count;
+    }
+
+    virtual std::string str(){
+        return "";
+    }
 
     virtual std::string escapedStr(){
         return str();
     }
 
-	virtual std::vector<HeapObject*> getReferencedObjects() {
-		return std::vector<HeapObject*>();
-	}
-
-    virtual Reference<HeapObject>* copy();
-
-    virtual void set(HeapObject *other);
-
-    virtual void _set(HeapObject*){
-    }
-
-    virtual bool operator==(HeapObject &obj){
-        return obj.id == id;
-	}
-
-    virtual bool operator<(HeapObject&){
-        return false;
-	}
-
-    bool operator<=(HeapObject &obj){
-        return *this < obj || *this == obj;
-    }
-
-    bool operator>=(HeapObject &obj){
-        return !(*this < obj);
-    }
-
-    bool operator>(HeapObject &obj){
-        return obj < *this;
-    }
-
-    virtual bool operator!=(HeapObject &obj){
-        return !(*this == obj);
-    }
-
-    virtual bool toBool(){
-        return true;
-    }
-
-	void reference(){
-        reference_count++;
-	}
-
-    void dereference();
-
-    bool is(Type type){
-        return this->type == type;
-    }
-
     bool isReference(){
-        return this->type == Type::REFERENCE;
+        return type == Type::REFERENCE;
     }
 
-    bool isMap(){
-        return this->type == Type::MAP || this->type == Type::FUNCTION;
+    virtual std::vector<href> getReferencedObjects() {
+        return {};
     }
 
-    bool isNumeric(){
-        return this->type == Type::INT || this->type == Type::FLOAT;
+    /**
+     * @brief Is this Object a real Object instance?
+     */
+    bool isObject(){
+        return type == Type::OBJECT;
     }
 
-    bool isFloat(){
-        return this->type == Type::FLOAT;
+    bool isClass(){
+        return type == Type::CLASS;
     }
 
-    bool isInt(){
-        return this->type == Type::INT;
+    bool isMetaClass(){
+        return type == Type::META_CLASS;
     }
 
-    bool isFunction(){
-        return this->type == Type::FUNCTION;
+    virtual bool isFunction(){
+        return false;
     }
 
+    Env* getEnv();
 
-    HeapObject* transfer();
+    virtual ~HeapObject() = default;
 
-	virtual ~HeapObject() = default;
+    void setEnv(Env *env);
 };

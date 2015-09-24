@@ -2,39 +2,54 @@
 
 #include "stack.hpp"
 #include "reference.hpp"
+#include "baseobject.hpp"
 
-Reference<HeapObject>* Stack::pop(bool dereference){
-    if (stack.empty()){
+rref Stack::pop(){
+    if (empty()){
         throw std::string("No element on stack, can't pop any more");
     }
-    Reference<HeapObject>* val = stack.at(stack.size() - 1);
+    rref val = stack.at(stack.size() - 1);
     stack.pop_back();
-    if (dereference){
-        val->dereference();
-    }
-    return val;
+    return val.copy();
 }
 
-void Stack::popAndDeref(){
-    pop(true);
+void Stack::push(rref value){
+    stack.push_back(value);
 }
 
 void Stack::dup(){
-    Reference<HeapObject> *obj = stack.at(stack.size() - 1);
-    push(obj);
+    rref obj = pop();
+    push(obj.copy());
+    push(obj.copy());
+}
+
+void Stack::pushFrame()
+{
+    frame_stack.push_back(size());
+}
+
+void Stack::popFrame(){
+    cleanToSize(frame_stack.at(frame_stack.size() - 1));
+    frame_stack.pop_back();
+}
+
+void Stack::cleanToSize(size_t _size){
+    while (size() > _size){
+        pop();
+    }
 }
 
 std::string Stack::str(){
     std::ostringstream stream;
     stream << "stack height=" << size() << "\n";
-    size_t frameStackPos = frameStack.size();
+    size_t frameStackPos = frame_stack.size();
     for (size_t i = size(); i > 0; i--){
         stream << " " << (i - 1) << ":" << "value=" << stack.at(i - 1)->escapedStr()
-         << ", ref count=" << stack.at(i - 1)->reference_count << "\n";
-         if (frameStackPos > 0 && frameStack.at(frameStackPos - 1) == i - 1){
+               << "\n";
+        if (frameStackPos > 0 && frame_stack.at(frameStackPos - 1) == i - 1){
             frameStackPos--;
             stream << "--------- frame " << frameStackPos << " ends ---------\n";
-         }
+        }
     }
     return stream.str();
 }

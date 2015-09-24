@@ -6,11 +6,10 @@
  * License: GPL v3
  */
 
-
+#define DO_LOG
 #include "utils.hpp"
 
 #include "heap.hpp"
-#include "heapobjects.hpp"
 #include "scope.hpp"
 #include "stack.hpp"
 #include "env.hpp"
@@ -19,30 +18,33 @@
 #include "lang/parser.hpp"
 #include "exception.hpp"
 
-#include "stdlib/stdlib.hpp"
-
 void lex();
 void parse();
-void compileAndInterpet();
+void compileAndInterpret();
 
 int main(int argc, char *argv[]){
+    L
     if (argc == 2){
         try {
             if (std::string(argv[1]) == "lex"){
+                L
                 lex();
             } else if (std::string(argv[1]) == "parse"){
+                L
                 parse();
             } else if (std::string(argv[1]) == "interpret"){
-                compileAndInterpet();
+                L
+                compileAndInterpret();
             }
         } catch (std::string str){
             std::cerr << str;
             exit(1);
         }
+     L
         exit(0);
     }
-	Env env;
-    loadStdLib(&env);
+    L
+    Env env;
     try {
         env.interpret(new VerboseParser(&std::cin));
     } catch (Exception *ex){
@@ -70,15 +72,20 @@ void parse(){
     node->compile(target);
 }
 
-void compileAndInterpet(){
+void compileAndInterpret(){
     lang::Lexer lexer(&std::cin);
     lang::Parser parser(&lexer);
+    L
     lang::Node* node = parser.parse();
+    L
     std::ostringstream ostream;
+    L
     lang::Target target(&ostream);
+    L
     node->compile(target);
+    L
     Env env;
-    loadStdLib(&env);
+    L
     std::istringstream istream(ostream.str());
     try {
         env.interpret(new VerboseParser(&istream));

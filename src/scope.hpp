@@ -3,45 +3,76 @@
 #include "utils.hpp"
 #include "heapobject.hpp"
 
-struct Heap;
+/**
+ * @brief The Scope class
+ */
+class Scope : public HeapObject {
 
-struct Scope : HeapObject {
-    bool isRoot = false;
-    Scope* parent = nullptr;
-    std::unordered_map<std::string, Reference<HeapObject>*> variables;
+    Optional<SmartReference<Scope>> _parent;
+    std::unordered_map<std::string, rref> variables;
 
-   // Scope(Heap *heap);
+public:
 
-    Scope(Env *env, Scope *scope = 0);
+    Scope(Env *env, SmartReference<Scope> parent_scope);
 
-    Scope* root(){
-        if (isRoot){
-            return this;
-        }
-        return parent->root();
-    }
+    Scope(Env *env);
 
-    void set(std::string varname, HeapObject* obj, bool reference = true);
+    SmartReference<Scope> root();
 
+    bool isRoot();
+
+    SmartReference<Scope> parent();
+
+    /**
+     * @brief Set the variables value.
+     * @param varname variable name
+     * @param obj new value
+     */
+    void set(std::string varname, bref obj);
+
+    /**
+     * @brief Set the variables value.
+     * @param varname variable name
+     * @param obj new value
+     */
+    void set(std::string varname, rref obj);
+
+    /**
+     * @brief Initializes the variable in this scope.
+     *
+     * @param varname name of the variable
+     */
     void initVar(std::string varname);
 
-    void setHere(std::string varname, HeapObject* obj, bool reference = true);
+    /**
+     * @brief Initializes and set the variable
+     * @param varname variable name
+     * @param obj new value
+     */
+    void setHere(std::string varname, rref obj);
 
-    Reference<HeapObject>* get(std::string varname, bool returnNothing = true);
+    /**
+     * @brief Get the variables value.
+     * @param varname variable name
+     * @return value
+     */
+    rref get(std::string varname);
 
+    /**
+     * @brief Has this scope a variable with this name?
+     * @param varname variable name
+     * @param recursive visit parent scopes
+     * @return
+     */
     bool has(std::string varname, bool recursive = true);
 
-    Scope* createChild();
+    /**
+     * @brief Create a child scope.
+     * @return child scope
+     */
+    SmartReference<Scope> createChild();
 
     std::string str();
 
     std::string str_large();
-
-    virtual std::vector<HeapObject*> getReferencedObjects() {
-		if (isRoot){
-            return {};
-		} else {
-            return {parent};
-		}
-	}
 };
